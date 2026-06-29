@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  --color-creme: #F5F0E8;
+  --color-terracota: #C66B5A;
+  --color-salvia: #9CAF88;
+  --color-dourado: #D4AF7A;
+  --color-cafe: #5C4A3D;
+  --color-cafe-claro: #8B7355;
+  --color-terracota-escuro: #A85748;
+  --color-terracota-claro: #E8A090;
+  --font-titulo: "Playfair Display", serif;
+  --font-corpo: "Nunito Sans", sans-serif;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Nunito Sans", sans-serif;
+  background-color: #F5F0E8;
+  color: #5C4A3D;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.font-titulo {
+  font-family: "Playfair Display", serif;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #D4AF7A; border-radius: 2px; }
