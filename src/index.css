@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 @theme {
-  --color-creme: #F5F0E8;
-  --color-terracota: #C66B5A;
-  --color-salvia: #9CAF88;
-  --color-dourado: #D4AF7A;
-  --color-cafe: #5C4A3D;
-  --color-cafe-claro: #8B7355;
-  --color-terracota-escuro: #A85748;
-  --color-terracota-claro: #E8A090;
+  --color-fundo: #EDE7F9;
+  --color-primaria: #9B7AD6;
+  --color-primaria-escura: #6B4EA8;
+  --color-primaria-clara: #C9B3ED;
+  --color-texto: #3D2B6B;
+  --color-texto-suave: #7B6B9A;
+  --color-borda: #D8CCF0;
+  --color-acento: #B8A0E0;
   --font-titulo: "Playfair Display", serif;
   --font-corpo: "Nunito Sans", sans-serif;
 }
@@ -21,8 +21,8 @@
 body {
   margin: 0;
   font-family: "Nunito Sans", sans-serif;
-  background-color: #F5F0E8;
-  color: #5C4A3D;
+  background-color: #EDE7F9;
+  color: #3D2B6B;
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
 }
@@ -39,4 +39,4 @@ body {
 
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #D4AF7A; border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: #B8A0E0; border-radius: 2px; }

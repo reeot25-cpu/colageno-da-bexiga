@@ -3,7 +3,6 @@ import { ArrowLeft, Play, Pause, SkipForward, Info } from 'lucide-react'
 import { treinos, avisoExercicios, comoContrair } from '../data/exercicios'
 import { useProgresso } from '../hooks/useProgresso'
 
-// Tela do timer durante o treino
 function TelaTimer({ treino, onConcluir, onVoltar }) {
   const [etapaIdx, setEtapaIdx] = useState(0)
   const [segundosRestantes, setSegundosRestantes] = useState(treino.etapas[0].segundos)
@@ -19,7 +18,6 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
     intervalRef.current = setInterval(() => {
       setSegundosRestantes((s) => {
         if (s <= 1) {
-          // Avança etapa
           const proximo = etapaIdx + 1
           if (proximo >= totalEtapas) {
             clearInterval(intervalRef.current)
@@ -54,17 +52,17 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
     return (
       <div className="flex flex-col items-center justify-center gap-6 px-6 py-12 text-center">
         <div className="text-6xl">🎉</div>
-        <h2 className="font-titulo text-2xl text-[#5C4A3D]">Parabéns!</h2>
-        <p className="text-[#9C8A7A] text-base">
+        <h2 className="font-titulo text-2xl text-[#3D2B6B]">Parabéns!</h2>
+        <p className="text-[#7B6B9A] text-base">
           Você completou o <strong>{treino.nome}</strong>. Seu corpo agradece o cuidado de hoje! 🌸
         </p>
         <button
           onClick={onConcluir}
-          className="w-full py-4 bg-[#C66B5A] text-white rounded-2xl font-semibold text-lg"
+          className="w-full py-4 bg-[#9B7AD6] text-white rounded-2xl font-semibold text-lg"
         >
           Registrar conclusão ✓
         </button>
-        <button onClick={onVoltar} className="text-[#9C8A7A] underline text-sm">
+        <button onClick={onVoltar} className="text-[#7B6B9A] underline text-sm">
           Voltar aos exercícios
         </button>
       </div>
@@ -74,35 +72,33 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
   return (
     <div className="flex flex-col gap-5 pb-32">
       <div className="flex items-center gap-3 px-4 pt-4">
-        <button onClick={onVoltar} className="p-2 rounded-full bg-white shadow-sm border border-[#EDE5D8]">
-          <ArrowLeft size={20} className="text-[#5C4A3D]" />
+        <button onClick={onVoltar} className="p-2 rounded-full bg-white shadow-sm border border-[#D8CCF0]">
+          <ArrowLeft size={20} className="text-[#3D2B6B]" />
         </button>
-        <h2 className="font-titulo text-lg text-[#5C4A3D] font-semibold">{treino.nome}</h2>
+        <h2 className="font-titulo text-lg text-[#3D2B6B] font-semibold">{treino.nome}</h2>
       </div>
 
       <div className="px-4 flex flex-col items-center gap-6">
-        {/* Progresso de etapas */}
         <div className="flex gap-1.5 w-full">
           {treino.etapas.map((_, i) => (
             <div
               key={i}
               className="flex-1 h-1.5 rounded-full"
-              style={{ backgroundColor: i <= etapaIdx ? '#C66B5A' : '#EDE5D8' }}
+              style={{ backgroundColor: i <= etapaIdx ? '#9B7AD6' : '#D8CCF0' }}
             />
           ))}
         </div>
 
-        <p className="text-[#9C8A7A] text-sm">
+        <p className="text-[#7B6B9A] text-sm">
           Etapa {etapaIdx + 1} de {totalEtapas}
         </p>
 
-        {/* Timer circular */}
         <div className="relative w-48 h-48">
           <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="45" fill="none" stroke="#EDE5D8" strokeWidth="8" />
+            <circle cx="50" cy="50" r="45" fill="none" stroke="#D8CCF0" strokeWidth="8" />
             <circle
               cx="50" cy="50" r="45" fill="none"
-              stroke="#C66B5A" strokeWidth="8"
+              stroke="#9B7AD6" strokeWidth="8"
               strokeDasharray={`${2 * Math.PI * 45}`}
               strokeDashoffset={`${2 * Math.PI * 45 * (1 - pctTimer / 100)}`}
               strokeLinecap="round"
@@ -110,31 +106,29 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="font-titulo text-4xl font-bold text-[#5C4A3D]">
+            <span className="font-titulo text-4xl font-bold text-[#3D2B6B]">
               {minutos > 0 ? `${minutos}:${String(segs).padStart(2, '0')}` : segs}
             </span>
-            {minutos === 0 && <span className="text-[#9C8A7A] text-xs">segundos</span>}
+            {minutos === 0 && <span className="text-[#7B6B9A] text-xs">segundos</span>}
           </div>
         </div>
 
-        {/* Nome e instrução da etapa */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#EDE5D8] w-full text-center">
-          <h3 className="font-titulo text-lg text-[#C66B5A] mb-2">{etapa.nome}</h3>
-          <p className="text-[#5C4A3D] text-base leading-relaxed">{etapa.instrucao}</p>
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#D8CCF0] w-full text-center">
+          <h3 className="font-titulo text-lg text-[#9B7AD6] mb-2">{etapa.nome}</h3>
+          <p className="text-[#3D2B6B] text-base leading-relaxed">{etapa.instrucao}</p>
         </div>
 
-        {/* Controles */}
         <div className="flex gap-4">
           <button
             onClick={() => setPausado((p) => !p)}
-            className="flex items-center gap-2 px-6 py-3 bg-[#C66B5A] text-white rounded-2xl font-semibold"
+            className="flex items-center gap-2 px-6 py-3 bg-[#9B7AD6] text-white rounded-2xl font-semibold"
           >
             {pausado ? <Play size={20} /> : <Pause size={20} />}
             {pausado ? 'Continuar' : 'Pausar'}
           </button>
           <button
             onClick={pularEtapa}
-            className="flex items-center gap-2 px-5 py-3 bg-white border border-[#EDE5D8] text-[#9C8A7A] rounded-2xl font-semibold"
+            className="flex items-center gap-2 px-5 py-3 bg-white border border-[#D8CCF0] text-[#7B6B9A] rounded-2xl font-semibold"
           >
             <SkipForward size={20} />
             Pular
@@ -146,7 +140,7 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
 }
 
 export default function Exercicios() {
-  const [telaPrincipal, setTelaPrincipal] = useState('lista') // lista | info | timer
+  const [telaPrincipal, setTelaPrincipal] = useState('lista')
   const [treinoSelecionado, setTreinoSelecionado] = useState(null)
   const [mostraAviso, setMostraAviso] = useState(true)
   const { marcarTarefa, estado, diaAtivo } = useProgresso()
@@ -181,15 +175,15 @@ export default function Exercicios() {
         <div className="flex items-center gap-3 px-4 pt-4">
           <button
             onClick={() => setTelaPrincipal('lista')}
-            className="p-2 rounded-full bg-white shadow-sm border border-[#EDE5D8]"
+            className="p-2 rounded-full bg-white shadow-sm border border-[#D8CCF0]"
           >
-            <ArrowLeft size={20} className="text-[#5C4A3D]" />
+            <ArrowLeft size={20} className="text-[#3D2B6B]" />
           </button>
-          <h2 className="font-titulo text-xl text-[#5C4A3D]">Como contrair corretamente?</h2>
+          <h2 className="font-titulo text-xl text-[#3D2B6B]">Como contrair corretamente?</h2>
         </div>
         <div className="px-4 flex flex-col gap-4">
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#EDE5D8]">
-            <p className="text-[#5C4A3D] text-base leading-relaxed">{comoContrair.texto}</p>
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#D8CCF0]">
+            <p className="text-[#3D2B6B] text-base leading-relaxed">{comoContrair.texto}</p>
           </div>
           <div className="bg-[#FFF5E4] rounded-2xl p-4 border border-[#D4AF7A]">
             <p className="text-[#7A5A20] text-sm leading-relaxed">⚠️ {avisoExercicios}</p>
@@ -203,66 +197,56 @@ export default function Exercicios() {
     <div className="flex flex-col gap-5 px-4 pt-6 pb-32 max-w-lg mx-auto">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="font-titulo text-2xl text-[#5C4A3D]">Exercícios</h1>
-          <p className="text-[#9C8A7A] text-base mt-1">Faça enquanto espera</p>
+          <h1 className="font-titulo text-2xl text-[#3D2B6B]">Exercícios</h1>
+          <p className="text-[#7B6B9A] text-base mt-1">Faça enquanto espera</p>
         </div>
         <button
           onClick={() => setTelaPrincipal('info')}
-          className="flex items-center gap-1 text-sm text-[#9C8A7A] bg-white border border-[#EDE5D8] px-3 py-2 rounded-xl shadow-sm"
+          className="flex items-center gap-1 text-sm text-[#7B6B9A] bg-white border border-[#D8CCF0] px-3 py-2 rounded-xl shadow-sm"
         >
           <Info size={16} /> Como fazer?
         </button>
       </div>
 
-      {/* Aviso */}
       {mostraAviso && (
         <div className="bg-[#FFF5E4] rounded-2xl p-4 border border-[#D4AF7A] flex gap-3">
           <span className="text-xl shrink-0">⚠️</span>
           <div>
             <p className="text-[#7A5A20] text-sm leading-relaxed">{avisoExercicios}</p>
-            <button
-              onClick={() => setMostraAviso(false)}
-              className="mt-2 text-xs text-[#7A5A20] underline"
-            >
+            <button onClick={() => setMostraAviso(false)} className="mt-2 text-xs text-[#7A5A20] underline">
               Entendi
             </button>
           </div>
         </div>
       )}
 
-      {/* Treino de hoje marcado */}
       {feito && (
-        <div className="bg-[#E8F0E4] rounded-2xl p-3 text-center">
-          <p className="text-[#4A6B3E] font-semibold">🎉 Exercício de hoje concluído!</p>
+        <div className="bg-[#E8E0F8] rounded-2xl p-3 text-center">
+          <p className="text-[#6B4EA8] font-semibold">🎉 Exercício de hoje concluído!</p>
         </div>
       )}
 
-      {/* Cards de treino */}
       <div className="flex flex-col gap-3">
         {treinos.map((treino) => (
-          <div
-            key={treino.id}
-            className="bg-white rounded-2xl p-5 shadow-sm border border-[#EDE5D8]"
-          >
+          <div key={treino.id} className="bg-white rounded-2xl p-5 shadow-sm border border-[#D8CCF0]">
             <div className="flex items-center justify-between mb-3">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{treino.icone}</span>
-                  <h3 className="font-titulo text-lg text-[#5C4A3D] font-semibold">{treino.nome}</h3>
+                  <h3 className="font-titulo text-lg text-[#3D2B6B] font-semibold">{treino.nome}</h3>
                 </div>
-                <p className="text-[#9C8A7A] text-sm mt-0.5">{treino.descricao}</p>
+                <p className="text-[#7B6B9A] text-sm mt-0.5">{treino.descricao}</p>
               </div>
-              <span className="bg-[#F5EAD8] text-[#A07840] font-bold text-sm px-3 py-1 rounded-full">
+              <span className="bg-[#EDE7F9] text-[#6B4EA8] font-bold text-sm px-3 py-1 rounded-full">
                 {treino.duracao}
               </span>
             </div>
 
-            {/* Etapas resumidas */}
             <div className="flex flex-wrap gap-1.5 mb-4">
               {treino.etapas.map((e, i) => (
                 <span
                   key={i}
-                  className="text-xs bg-[#F5F0E8] text-[#9C8A7A] px-2 py-0.5 rounded-full border border-[#EDE5D8]"
+                  className="text-xs bg-[#F5F0FF] text-[#7B6B9A] px-2 py-0.5 rounded-full border border-[#D8CCF0]"
                 >
                   {e.nome}
                 </span>
@@ -271,7 +255,7 @@ export default function Exercicios() {
 
             <button
               onClick={() => iniciarTreino(treino)}
-              className="w-full py-3.5 bg-[#C66B5A] text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-[#A85748]"
+              className="w-full py-3.5 bg-[#9B7AD6] text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-[#6B4EA8]"
             >
               <Play size={18} fill="white" />
               Começar treino
