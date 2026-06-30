@@ -9,6 +9,7 @@ import Progresso from './pages/Progresso'
 import Aviso from './pages/Aviso'
 import Configuracoes from './pages/Configuracoes'
 import Produtos from './pages/Produtos'
+import Diario from './pages/Diario'
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/aviso" element={<Aviso />} />
           <Route path="/configuracoes" element={<Configuracoes />} />
           <Route path="/produtos" element={<Produtos />} />
+          <Route path="/diario" element={<Diario />} />
         </Routes>
       </main>
       <BottomNav />

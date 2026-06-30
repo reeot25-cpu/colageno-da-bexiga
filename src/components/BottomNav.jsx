@@ -1,13 +1,14 @@
 import { NavLink } from 'react-router-dom'
-import { Home, Coffee, UtensilsCrossed, TrendingUp } from 'lucide-react'
+import { Home, Coffee, UtensilsCrossed, TrendingUp, BookHeart } from 'lucide-react'
 import IconAssoalhoPelvico from './IconAssoalhoPelvico'
 
 const abas = [
-  { to: '/',           label: 'Início',     Icon: Home },
-  { to: '/chas',       label: 'Chás',       Icon: Coffee },
-  { to: '/receitas',   label: 'Receitas',   Icon: UtensilsCrossed },
-  { to: '/exercicios', label: 'Exercícios', Icon: IconAssoalhoPelvico },
-  { to: '/progresso',  label: 'Progresso',  Icon: TrendingUp },
+  { to: '/',           label: 'Início',    Icon: Home },
+  { to: '/chas',       label: 'Chás',      Icon: Coffee },
+  { to: '/receitas',   label: 'Receitas',  Icon: UtensilsCrossed },
+  { to: '/exercicios', label: 'Exerc.',    Icon: IconAssoalhoPelvico },
+  { to: '/diario',     label: 'Diário',    Icon: BookHeart },
+  { to: '/progresso',  label: 'Progresso', Icon: TrendingUp },
 ]
 
 export default function BottomNav() {
@@ -27,8 +28,8 @@ export default function BottomNav() {
           >
             {({ isActive }) => (
               <>
-                <Icon size={22} strokeWidth={isActive ? 2.2 : 1.6} />
-                <span className="text-[10px] font-semibold leading-none">{label}</span>
+                <Icon size={20} strokeWidth={isActive ? 2.2 : 1.6} />
+                <span className="text-[9px] font-semibold leading-none">{label}</span>
               </>
             )}
           </NavLink>
