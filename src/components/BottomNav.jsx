@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom'
-import { Home, Coffee, UtensilsCrossed, Activity, TrendingUp } from 'lucide-react'
+import { Home, Coffee, UtensilsCrossed, TrendingUp } from 'lucide-react'
+import IconAssoalhoPelvico from './IconAssoalhoPelvico'
 
 const abas = [
   { to: '/',           label: 'Início',     Icon: Home },
   { to: '/chas',       label: 'Chás',       Icon: Coffee },
   { to: '/receitas',   label: 'Receitas',   Icon: UtensilsCrossed },
-  { to: '/exercicios', label: 'Exercícios', Icon: Activity },
+  { to: '/exercicios', label: 'Exercícios', Icon: IconAssoalhoPelvico },
   { to: '/progresso',  label: 'Progresso',  Icon: TrendingUp },
 ]
 
@@ -26,7 +27,7 @@ export default function BottomNav() {
           >
             {({ isActive }) => (
               <>
-                <Icon size={22} strokeWidth={isActive ? 2.5 : 1.8} />
+                <Icon size={22} strokeWidth={isActive ? 2.2 : 1.6} />
                 <span className="text-[10px] font-semibold leading-none">{label}</span>
               </>
             )}

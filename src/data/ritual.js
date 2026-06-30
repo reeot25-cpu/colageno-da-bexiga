@@ -7,7 +7,7 @@ export const diasRitual = Array.from({ length: 7 }, (_, i) => ({
     { id: `d${i + 1}_vitamina`,       label: 'Vitamina da Firmeza',  emoji: '🥝', horario: 'Café da manhã' },
     { id: `d${i + 1}_prato_base`,     label: 'Prato Base',           emoji: '🥗', horario: 'Almoço' },
     { id: `d${i + 1}_cha_anti`,       label: 'Chá Anti-Inflama',     emoji: '🫚', horario: 'Tarde' },
-    { id: `d${i + 1}_exercicio`,      label: 'Exercício do dia',     emoji: '💪', horario: 'Qualquer momento' },
+    { id: `d${i + 1}_exercicio`,      label: 'Exercício do dia',     emoji: '🧘', horario: 'Qualquer momento' },
     { id: `d${i + 1}_caldo`,          label: 'Caldo Pró-Colágeno',   emoji: '🍲', horario: 'Jantar' },
     { id: `d${i + 1}_cha_calmaria`,   label: 'Chá da Calmaria',      emoji: '🌼', horario: 'Noite' },
   ],

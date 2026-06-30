@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { Coffee, UtensilsCrossed, Activity, ChevronRight, Sparkles, Settings } from 'lucide-react'
+import { Coffee, UtensilsCrossed, ChevronRight, Sparkles, Settings } from 'lucide-react'
+import IconAssoalhoPelvico from '../components/IconAssoalhoPelvico'
 import { useProgresso } from '../hooks/useProgresso'
 import { frases, diasRitual } from '../data/ritual'
 
@@ -8,7 +9,7 @@ const fraseHoje = frases[new Date().getDay() % frases.length]
 const atalhos = [
   { to: '/chas',       label: 'Chás',       emoji: '🍵', bg: '#E8E0F8', cor: '#6B4EA8' },
   { to: '/receitas',   label: 'Receitas',   emoji: '🥗', bg: '#EAE0FA', cor: '#7B5AA8' },
-  { to: '/exercicios', label: 'Exercícios', emoji: '💪', bg: '#EDE0F8', cor: '#6B4EA8' },
+  { to: '/exercicios', label: 'Exercícios', emoji: null,  Icone: IconAssoalhoPelvico, bg: '#EDE0F8', cor: '#6B4EA8' },
 ]
 
 export default function Inicio() {
@@ -138,14 +139,17 @@ export default function Inicio() {
 
       {/* Atalhos */}
       <div className="grid grid-cols-3 gap-3">
-        {atalhos.map(({ to, label, emoji, bg, cor }) => (
+        {atalhos.map(({ to, label, emoji, Icone, bg, cor }) => (
           <Link
             key={to}
             to={to}
             className="flex flex-col items-center gap-2 p-4 rounded-2xl shadow-sm"
             style={{ backgroundColor: bg }}
           >
-            <span className="text-3xl">{emoji}</span>
+            {Icone
+              ? <Icone size={34} strokeWidth={1.6} style={{ color: cor }} />
+              : <span className="text-3xl">{emoji}</span>
+            }
             <span className="text-sm font-semibold" style={{ color: cor }}>{label}</span>
           </Link>
         ))}
