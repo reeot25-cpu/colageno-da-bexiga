@@ -3,20 +3,19 @@ import { useState, useCallback } from 'react'
 const CHAVE = 'collagenflow_config'
 
 function configInicial() {
-  return { somAtivo: true }
+  return { somAtivo: true, lembretesAtivos: true }
 }
 
 function carregar() {
   try {
     const salvo = localStorage.getItem(CHAVE)
-    // Se nunca abriu antes, usa o padrão (som ativado)
     return salvo ? { ...configInicial(), ...JSON.parse(salvo) } : configInicial()
   } catch {
     return configInicial()
   }
 }
 
-function salvar(config) {
+function persistir(config) {
   localStorage.setItem(CHAVE, JSON.stringify(config))
 }
 
@@ -26,10 +25,18 @@ export function useConfiguracoes() {
   const alterarSom = useCallback((valor) => {
     setConfig((prev) => {
       const novo = { ...prev, somAtivo: valor }
-      salvar(novo)
+      persistir(novo)
       return novo
     })
   }, [])
 
-  return { config, alterarSom }
+  const alterarLembretes = useCallback((valor) => {
+    setConfig((prev) => {
+      const novo = { ...prev, lembretesAtivos: valor }
+      persistir(novo)
+      return novo
+    })
+  }, [])
+
+  return { config, alterarSom, alterarLembretes }
 }
