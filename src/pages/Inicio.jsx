@@ -1,10 +1,9 @@
 import { Link } from 'react-router-dom'
-import { Coffee, UtensilsCrossed, ChevronRight, Sparkles, Settings, ShoppingBag } from 'lucide-react'
+import { ChevronRight, Sparkles, Settings, ShoppingBag } from 'lucide-react'
 import IconAssoalhoPelvico from '../components/IconAssoalhoPelvico'
 import { useProgresso } from '../hooks/useProgresso'
-import { frases, diasRitual } from '../data/ritual'
-
-const fraseHoje = frases[new Date().getDay() % frases.length]
+import { useMensagemBoasVindas } from '../hooks/useMensagemBoasVindas'
+import { diasRitual } from '../data/ritual'
 
 const atalhos = [
   { to: '/chas',       label: 'Chás',       emoji: '🍵', bg: '#E8E0F8', cor: '#6B4EA8' },
@@ -12,17 +11,40 @@ const atalhos = [
   { to: '/exercicios', label: 'Exercícios', emoji: null,  Icone: IconAssoalhoPelvico, bg: '#EDE0F8', cor: '#6B4EA8' },
 ]
 
+function CardBoasVindas({ mensagem }) {
+  return (
+    <Link to={mensagem.destino} className="block">
+      <div
+        className="rounded-2xl p-5 shadow-md flex items-center gap-4"
+        style={{
+          background: `linear-gradient(135deg, ${mensagem.bgDe}, ${mensagem.bgAte})`,
+        }}
+      >
+        <span className="text-4xl shrink-0 leading-none">{mensagem.emoji}</span>
+        <div className="flex-1">
+          <p className="text-white font-semibold text-base leading-snug">{mensagem.texto}</p>
+          <p className="text-white/70 text-sm mt-1">
+            {mensagem.tipo === 'exercicios' ? 'Ir para exercícios →' : 'Abrir diário →'}
+          </p>
+        </div>
+      </div>
+    </Link>
+  )
+}
+
 export default function Inicio() {
   const { diaAtivo, progressoDia, progressoGeral, estado } = useProgresso()
-  const prog = progressoDia(diaAtivo)
+  const mensagem = useMensagemBoasVindas()
+  const prog  = progressoDia(diaAtivo)
   const geral = progressoGeral()
 
-  const tarefasHoje = diasRitual[diaAtivo - 1]?.tarefas ?? []
+  const tarefasHoje  = diasRitual[diaAtivo - 1]?.tarefas ?? []
   const proximaTarefa = tarefasHoje.find((t) => !estado.concluidas[t.id])
   const pctRitual = Math.round((geral.diasCompletos / 7) * 100)
 
   return (
     <div className="flex flex-col gap-5 px-4 pt-6 pb-32 max-w-lg mx-auto">
+
       {/* Cabeçalho */}
       <div className="flex items-center justify-between">
         <span className="font-titulo text-[#6B4EA8] text-2xl font-bold tracking-tight">CollagenFlow</span>
@@ -34,10 +56,12 @@ export default function Inicio() {
       {/* Saudação */}
       <div>
         <h1 className="font-titulo text-2xl text-[#3D2B6B] leading-tight">
-          Olá! Que bom<br />te ver por aqui
+          Olá! Que bom<br />te ver por aqui 💜
         </h1>
-        <p className="text-[#7B6B9A] mt-1 text-base">{fraseHoje}</p>
       </div>
+
+      {/* Card de boas-vindas dinâmico */}
+      <CardBoasVindas mensagem={mensagem} />
 
       {/* Card Ritual 7 Dias */}
       <Link to="/progresso" className="block">
@@ -71,7 +95,7 @@ export default function Inicio() {
               const d = i + 1
               const p = progressoDia(d)
               const completo = p.feitas === p.total && p.total > 0
-              const atual = d === diaAtivo
+              const atual    = d === diaAtivo
               return (
                 <div key={d} className="flex-1 flex flex-col items-center gap-1">
                   <div
