@@ -1,8 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import BottomNav from './components/BottomNav'
 import AvisoAtualizacao from './components/AvisoAtualizacao'
 import PedirPermissaoNotificacao from './components/PedirPermissaoNotificacao'
+import SplashScreen from './components/SplashScreen'
 import Inicio from './pages/Inicio'
 import Chas from './pages/Chas'
 import Receitas from './pages/Receitas'
@@ -17,6 +18,7 @@ import { inicializarNotificacoes } from './utils/notificacoes'
 
 function AppInner() {
   const { config } = useConfiguracoes()
+  const [splashDone, setSplashDone] = useState(false)
 
   useEffect(() => {
     inicializarNotificacoes(config.lembretesAtivos)
@@ -24,6 +26,7 @@ function AppInner() {
 
   return (
     <div className="flex flex-col min-h-dvh bg-[#EDE7F9] max-w-lg mx-auto w-full">
+      <SplashScreen onDone={() => setSplashDone(true)} />
       <main className="flex-1 overflow-y-auto">
         <Routes>
           <Route path="/" element={<Inicio />} />
