@@ -2,12 +2,15 @@ import { useState, useEffect, useRef } from 'react'
 import { ArrowLeft, Play, Pause, SkipForward, Info } from 'lucide-react'
 import { treinos, avisoExercicios, comoContrair } from '../data/exercicios'
 import { useProgresso } from '../hooks/useProgresso'
+import { useConfiguracoes } from '../hooks/useConfiguracoes'
+import { tocarTrocaEtapa, tocarConclusao } from '../utils/som'
 
 function TelaTimer({ treino, onConcluir, onVoltar }) {
   const [etapaIdx, setEtapaIdx] = useState(0)
   const [segundosRestantes, setSegundosRestantes] = useState(treino.etapas[0].segundos)
   const [pausado, setPausado] = useState(false)
   const [concluido, setConcluido] = useState(false)
+  const { config } = useConfiguracoes()
   const intervalRef = useRef(null)
 
   const etapa = treino.etapas[etapaIdx]
@@ -22,8 +25,10 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
           if (proximo >= totalEtapas) {
             clearInterval(intervalRef.current)
             setConcluido(true)
+            if (config.somAtivo) tocarConclusao()
             return 0
           }
+          if (config.somAtivo) tocarTrocaEtapa()
           setEtapaIdx(proximo)
           return treino.etapas[proximo].segundos
         }
@@ -31,7 +36,7 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
       })
     }, 1000)
     return () => clearInterval(intervalRef.current)
-  }, [etapaIdx, pausado, concluido])
+  }, [etapaIdx, pausado, concluido, config.somAtivo])
 
   function pularEtapa() {
     clearInterval(intervalRef.current)

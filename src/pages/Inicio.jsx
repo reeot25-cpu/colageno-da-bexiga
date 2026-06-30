@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Coffee, UtensilsCrossed, Activity, ChevronRight, Sparkles } from 'lucide-react'
+import { Coffee, UtensilsCrossed, Activity, ChevronRight, Sparkles, Settings } from 'lucide-react'
 import { useProgresso } from '../hooks/useProgresso'
 import { frases, diasRitual } from '../data/ritual'
 
@@ -25,7 +25,9 @@ export default function Inicio() {
       {/* Cabeçalho */}
       <div className="flex items-center justify-between">
         <span className="font-titulo text-[#6B4EA8] text-2xl font-bold tracking-tight">CollagenFlow</span>
-        <span className="text-2xl">🌿</span>
+        <Link to="/configuracoes" className="p-2 rounded-full bg-white shadow-sm border border-[#D8CCF0]">
+          <Settings size={20} className="text-[#9B7AD6]" />
+        </Link>
       </div>
 
       {/* Saudação */}

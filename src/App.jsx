@@ -6,10 +6,11 @@ import Receitas from './pages/Receitas'
 import Exercicios from './pages/Exercicios'
 import Progresso from './pages/Progresso'
 import Aviso from './pages/Aviso'
+import Configuracoes from './pages/Configuracoes'
 
 export default function App() {
   return (
-    <div className="flex flex-col min-h-dvh bg-[#F5F0E8] max-w-lg mx-auto w-full">
+    <div className="flex flex-col min-h-dvh bg-[#EDE7F9] max-w-lg mx-auto w-full">
       <main className="flex-1 overflow-y-auto">
         <Routes>
           <Route path="/" element={<Inicio />} />
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="/exercicios" element={<Exercicios />} />
           <Route path="/progresso" element={<Progresso />} />
           <Route path="/aviso" element={<Aviso />} />
+          <Route path="/configuracoes" element={<Configuracoes />} />
         </Routes>
       </main>
       <BottomNav />
