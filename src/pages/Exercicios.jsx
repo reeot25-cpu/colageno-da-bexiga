@@ -78,20 +78,39 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
         <h2 className="font-titulo text-lg text-[#3D2B6B] font-semibold">{treino.nome}</h2>
       </div>
 
-      <div className="px-4 flex flex-col items-center gap-6">
-        <div className="flex gap-1.5 w-full">
-          {treino.etapas.map((_, i) => (
+      <div className="px-4 flex flex-col items-center gap-5">
+        {/* Barra de progresso das etapas */}
+        <div className="w-full bg-white rounded-2xl p-4 shadow-sm border border-[#D8CCF0]">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-[#3D2B6B] font-semibold text-sm">
+              Etapa {etapaIdx + 1} de {totalEtapas}
+            </span>
+            <span className="text-[#9B7AD6] font-bold text-sm">
+              {Math.round(((etapaIdx) / totalEtapas) * 100)}% concluído
+            </span>
+          </div>
+          {/* Barra contínua */}
+          <div className="bg-[#E8E0F8] rounded-full h-3 overflow-hidden mb-3">
             <div
-              key={i}
-              className="flex-1 h-1.5 rounded-full"
-              style={{ backgroundColor: i <= etapaIdx ? '#9B7AD6' : '#D8CCF0' }}
+              className="bg-[#9B7AD6] h-full rounded-full transition-all duration-500"
+              style={{ width: `${(etapaIdx / totalEtapas) * 100}%` }}
             />
-          ))}
+          </div>
+          {/* Segmentos por etapa */}
+          <div className="flex gap-1">
+            {treino.etapas.map((et, i) => (
+              <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
+                <div
+                  className="w-full h-1.5 rounded-full transition-all duration-300"
+                  style={{
+                    backgroundColor:
+                      i < etapaIdx ? '#9B7AD6' : i === etapaIdx ? '#B8A0E0' : '#E8E0F8',
+                  }}
+                />
+              </div>
+            ))}
+          </div>
         </div>
-
-        <p className="text-[#7B6B9A] text-sm">
-          Etapa {etapaIdx + 1} de {totalEtapas}
-        </p>
 
         <div className="relative w-48 h-48">
           <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">

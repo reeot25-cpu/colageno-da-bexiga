@@ -49,15 +49,29 @@ export function useProgresso() {
     setEstado(novo)
   }, [])
 
-  // Calcula progresso do dia
+  // Progresso de um dia específico
   function progressoDia(dia) {
     const tarefas = diasRitual[dia - 1]?.tarefas ?? []
     const feitas = tarefas.filter((t) => estado.concluidas[t.id]).length
     return { feitas, total: tarefas.length, pct: tarefas.length ? (feitas / tarefas.length) * 100 : 0 }
   }
 
-  // Dia atual baseado em progresso real
+  // Progresso geral dos 7 dias (todas as tarefas)
+  function progressoGeral() {
+    const todas = diasRitual.flatMap((d) => d.tarefas)
+    const feitas = todas.filter((t) => estado.concluidas[t.id]).length
+    const diasCompletos = diasRitual.filter(({ dia, tarefas }) =>
+      tarefas.every((t) => estado.concluidas[t.id])
+    ).length
+    return {
+      feitas,
+      total: todas.length,
+      pct: todas.length ? (feitas / todas.length) * 100 : 0,
+      diasCompletos,
+    }
+  }
+
   const diaAtivo = estado.diaAtual
 
-  return { estado, marcarTarefa, avancarDia, reiniciar, progressoDia, diaAtivo }
+  return { estado, marcarTarefa, avancarDia, reiniciar, progressoDia, progressoGeral, diaAtivo }
 }

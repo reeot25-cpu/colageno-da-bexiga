@@ -4,9 +4,10 @@ import { diasRitual } from '../data/ritual'
 import { useProgresso } from '../hooks/useProgresso'
 
 export default function Progresso() {
-  const { estado, marcarTarefa, progressoDia, reiniciar, diaAtivo } = useProgresso()
+  const { estado, marcarTarefa, progressoDia, progressoGeral, reiniciar, diaAtivo } = useProgresso()
   const [diaExpandido, setDiaExpandido] = useState(diaAtivo)
   const [confirmaReinicio, setConfirmaReinicio] = useState(false)
+  const geral = progressoGeral()
 
   function handleReiniciar() {
     reiniciar()
@@ -28,6 +29,50 @@ export default function Progresso() {
           <RotateCcw size={13} />
           Reiniciar
         </button>
+      </div>
+
+      {/* RESUMO GERAL */}
+      <div className="bg-[#9B7AD6] rounded-2xl p-5 text-white shadow-md">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="text-[#D4C0F0] text-sm font-semibold uppercase tracking-wide">Total do protocolo</p>
+            <p className="font-titulo text-3xl font-bold mt-0.5">
+              {geral.feitas}
+              <span className="text-[#D4C0F0] text-xl font-normal"> / {geral.total}</span>
+            </p>
+            <p className="text-[#D4C0F0] text-sm">tarefas concluídas</p>
+          </div>
+          {/* Círculo percentual grande */}
+          <div className="relative w-20 h-20">
+            <svg className="w-full h-full -rotate-90" viewBox="0 0 60 60">
+              <circle cx="30" cy="30" r="25" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="5" />
+              <circle
+                cx="30" cy="30" r="25" fill="none"
+                stroke="white" strokeWidth="5"
+                strokeDasharray={`${2 * Math.PI * 25}`}
+                strokeDashoffset={`${2 * Math.PI * 25 * (1 - geral.pct / 100)}`}
+                strokeLinecap="round"
+                className="transition-all duration-700"
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-white font-bold text-xl leading-none">{Math.round(geral.pct)}%</span>
+              <span className="text-white/60 text-[9px]">completo</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Barra geral */}
+        <div className="bg-white/20 rounded-full h-3 overflow-hidden">
+          <div
+            className="bg-white h-full rounded-full transition-all duration-700"
+            style={{ width: `${geral.pct}%` }}
+          />
+        </div>
+        <div className="flex justify-between mt-2 text-xs text-[#D4C0F0]">
+          <span>🌟 {geral.diasCompletos} dia{geral.diasCompletos !== 1 ? 's' : ''} completo{geral.diasCompletos !== 1 ? 's' : ''}</span>
+          <span>Faltam {geral.total - geral.feitas} tarefas</span>
+        </div>
       </div>
 
       {/* Modal de confirmação */}
@@ -56,28 +101,41 @@ export default function Progresso() {
         </div>
       )}
 
-      {/* Visão geral dos 7 dias */}
+      {/* Grade dos 7 dias */}
       <div className="grid grid-cols-7 gap-1.5">
         {diasRitual.map(({ dia }) => {
-          const prog = progressoDia(dia)
-          const completo = prog.feitas === prog.total && prog.total > 0
+          const p = progressoDia(dia)
+          const completo = p.feitas === p.total && p.total > 0
           const ativo = dia === diaExpandido
           return (
             <button
               key={dia}
               onClick={() => setDiaExpandido(dia)}
               className={`flex flex-col items-center gap-1 py-2 rounded-xl transition-all ${
-                ativo ? 'bg-[#9B7AD6] text-white shadow-md' : completo ? 'bg-[#E8E0F8]' : 'bg-white border border-[#D8CCF0]'
+                ativo
+                  ? 'bg-[#9B7AD6] text-white shadow-md'
+                  : completo
+                  ? 'bg-[#E8E0F8]'
+                  : 'bg-white border border-[#D8CCF0]'
               }`}
             >
               {completo ? (
-                <Star size={16} fill="#9B7AD6" className={ativo ? 'text-white' : 'text-[#6B4EA8]'} />
+                <Star size={16} fill={ativo ? 'white' : '#9B7AD6'} className={ativo ? 'text-white' : 'text-[#9B7AD6]'} />
               ) : (
                 <span className={`text-xs font-bold ${ativo ? 'text-white' : 'text-[#7B6B9A]'}`}>D{dia}</span>
               )}
               <span className={`text-[10px] ${ativo ? 'text-[#D4C0F0]' : 'text-[#9B8BBB]'}`}>
-                {prog.feitas}/{prog.total}
+                {p.feitas}/{p.total}
               </span>
+              {/* Mini barra por dia */}
+              <div className="w-full px-1">
+                <div className={`h-1 rounded-full w-full ${ativo ? 'bg-white/30' : 'bg-[#E8E0F8]'}`}>
+                  <div
+                    className={`h-full rounded-full transition-all ${ativo ? 'bg-white' : 'bg-[#9B7AD6]'}`}
+                    style={{ width: `${p.pct}%` }}
+                  />
+                </div>
+              </div>
             </button>
           )
         })}
@@ -87,24 +145,34 @@ export default function Progresso() {
       {diasRitual.map(({ dia, tarefas }) =>
         dia !== diaExpandido ? null : (
           <div key={dia} className="bg-white rounded-2xl shadow-sm border border-[#D8CCF0] overflow-hidden">
-            <div className="bg-[#9B7AD6] px-5 py-4 flex items-center justify-between">
-              <h3 className="font-titulo text-white text-lg font-semibold">Dia {dia}</h3>
-              {(() => {
-                const p = progressoDia(dia)
-                return (
-                  <div className="flex items-center gap-2">
-                    <span className="text-[#D4C0F0] text-sm">{p.feitas}/{p.total}</span>
-                    <div className="w-24 bg-[#7B5AB8] rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-white h-full rounded-full transition-all"
-                        style={{ width: `${p.pct}%` }}
-                      />
-                    </div>
-                  </div>
-                )
-              })()}
+            {/* Header com barra de progresso */}
+            <div className="bg-[#9B7AD6] px-5 py-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-titulo text-white text-lg font-semibold">Dia {dia}</h3>
+                <span className="text-[#D4C0F0] text-sm font-semibold">
+                  {progressoDia(dia).feitas}/{progressoDia(dia).total} tarefas
+                </span>
+              </div>
+              {/* Barra segmentada por tarefa */}
+              <div className="flex gap-1">
+                {tarefas.map((t) => (
+                  <div
+                    key={t.id}
+                    title={t.label}
+                    className={`flex-1 h-2 rounded-full transition-all duration-300 ${
+                      estado.concluidas[t.id] ? 'bg-white' : 'bg-white/25'
+                    }`}
+                  />
+                ))}
+              </div>
+              <p className="text-[#D4C0F0] text-xs mt-1">
+                {progressoDia(dia).pct === 100
+                  ? '🌟 Dia completo!'
+                  : `${Math.round(progressoDia(dia).pct)}% concluído`}
+              </p>
             </div>
 
+            {/* Lista de tarefas */}
             <ul>
               {tarefas.map((tarefa, i) => {
                 const feita = estado.concluidas[tarefa.id] ?? false
@@ -134,14 +202,11 @@ export default function Progresso() {
               })}
             </ul>
 
-            {(() => {
-              const p = progressoDia(dia)
-              return p.feitas === p.total ? (
-                <div className="bg-[#E8E0F8] px-5 py-3 text-center">
-                  <p className="text-[#6B4EA8] font-semibold">🌟 Dia {dia} completo! Você arrasou!</p>
-                </div>
-              ) : null
-            })()}
+            {progressoDia(dia).feitas === progressoDia(dia).total && (
+              <div className="bg-[#E8E0F8] px-5 py-3 text-center">
+                <p className="text-[#6B4EA8] font-semibold">🌟 Dia {dia} completo! Você arrasou!</p>
+              </div>
+            )}
           </div>
         )
       )}
