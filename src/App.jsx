@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import BottomNav from './components/BottomNav'
+import AvisoAtualizacao from './components/AvisoAtualizacao'
 import Inicio from './pages/Inicio'
 import Chas from './pages/Chas'
 import Receitas from './pages/Receitas'
@@ -7,6 +8,7 @@ import Exercicios from './pages/Exercicios'
 import Progresso from './pages/Progresso'
 import Aviso from './pages/Aviso'
 import Configuracoes from './pages/Configuracoes'
+import Produtos from './pages/Produtos'
 
 export default function App() {
   return (
@@ -20,9 +22,11 @@ export default function App() {
           <Route path="/progresso" element={<Progresso />} />
           <Route path="/aviso" element={<Aviso />} />
           <Route path="/configuracoes" element={<Configuracoes />} />
+          <Route path="/produtos" element={<Produtos />} />
         </Routes>
       </main>
       <BottomNav />
+      <AvisoAtualizacao />
     </div>
   )
 }

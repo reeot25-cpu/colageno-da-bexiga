@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Coffee, UtensilsCrossed, ChevronRight, Sparkles, Settings } from 'lucide-react'
+import { Coffee, UtensilsCrossed, ChevronRight, Sparkles, Settings, ShoppingBag } from 'lucide-react'
 import IconAssoalhoPelvico from '../components/IconAssoalhoPelvico'
 import { useProgresso } from '../hooks/useProgresso'
 import { frases, diasRitual } from '../data/ritual'
@@ -155,12 +155,19 @@ export default function Inicio() {
         ))}
       </div>
 
-      {/* Em breve */}
-      <div className="bg-[#EDE7F9] rounded-2xl p-4 border border-dashed border-[#B8A0E0]">
-        <p className="text-[#9B8BBB] text-sm text-center">
-          ✨ <strong>Em breve:</strong> mais exercícios e acompanhamento personalizado
-        </p>
-      </div>
+      {/* Card Produtos */}
+      <Link to="/produtos" className="block">
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-[#D8CCF0] flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-[#EDE7F9] flex items-center justify-center shrink-0">
+            <ShoppingBag size={24} className="text-[#9B7AD6]" />
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-[#3D2B6B] text-base">Produtos recomendados</p>
+            <p className="text-[#7B6B9A] text-sm">Acessórios e suplementos para o seu ritual</p>
+          </div>
+          <ChevronRight size={18} className="text-[#9B7AD6] shrink-0" />
+        </div>
+      </Link>
 
       <Link to="/aviso" className="text-center text-xs text-[#9B8BBB] underline underline-offset-2 pb-2">
         Aviso importante
