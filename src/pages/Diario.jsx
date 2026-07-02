@@ -344,6 +344,7 @@ export default function Diario() {
   const mensagemAtiva = mensagemEsc ?? mensagemUrg
 
   return (
+    <>
     <div className="flex flex-col gap-5 px-4 pt-6 pb-32 max-w-lg mx-auto">
 
       {/* Header */}
@@ -453,5 +454,6 @@ export default function Diario() {
         onFechar={() => setRelatorioAberto(false)}
       />
     )}
+    </>
   )
 }

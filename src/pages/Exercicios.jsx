@@ -1,10 +1,80 @@
 import { useState, useEffect, useRef } from 'react'
-import { ArrowLeft, Play, Pause, SkipForward, Info, Volume2, VolumeX } from 'lucide-react'
+import { ArrowLeft, Play, Pause, SkipForward, Info } from 'lucide-react'
 import { treinos, avisoExercicios, comoContrair } from '../data/exercicios'
 import { useProgresso } from '../hooks/useProgresso'
 import { useConfiguracoes } from '../hooks/useConfiguracoes'
 import { tocarTrocaEtapa, tocarConclusao } from '../utils/som'
-import { criarNarrador, AVISO_5_SEGUNDOS, AVISO_CONCLUSAO } from '../utils/narrador'
+
+// ── Botão de narração por voz ─────────────────────────────────────────────────
+// A Web Speech API exige gesto direto do usuário (onClick).
+// Chamar speak() dentro de useEffect não funciona no iOS/Chrome.
+function BotaoNarracao({ texto }) {
+  const [estado, setEstado] = useState('parado') // 'parado' | 'falando' | 'pausado'
+  const utteranceRef = useRef(null)
+
+  // Para e limpa ao desmontar (troca de etapa)
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis?.cancel()
+      setEstado('parado')
+    }
+  }, [texto]) // reinicia quando o texto muda (nova etapa)
+
+  if (!('speechSynthesis' in window)) return null
+
+  function toggleVoz() {
+    if (estado === 'falando') {
+      window.speechSynthesis.pause()
+      setEstado('pausado')
+      return
+    }
+
+    if (estado === 'pausado') {
+      window.speechSynthesis.resume()
+      setEstado('falando')
+      return
+    }
+
+    // estado === 'parado' → iniciar do zero
+    window.speechSynthesis.cancel()
+    const u = new SpeechSynthesisUtterance(texto)
+    u.lang = 'pt-BR'
+    u.rate = 0.88
+    u.pitch = 1.05
+    u.volume = 1
+
+    // Tenta selecionar voz feminina pt-BR
+    const vozes = window.speechSynthesis.getVoices()
+    const voz =
+      vozes.find((v) => v.lang.startsWith('pt') && /female|feminina/i.test(v.name)) ??
+      vozes.find((v) => v.lang === 'pt-BR') ??
+      vozes.find((v) => v.lang.startsWith('pt'))
+    if (voz) u.voice = voz
+
+    u.onend = () => setEstado('parado')
+    u.onerror = () => setEstado('parado')
+    utteranceRef.current = u
+    window.speechSynthesis.speak(u)
+    setEstado('falando')
+  }
+
+  const label = estado === 'falando' ? 'Pausar narração' : estado === 'pausado' ? 'Continuar narração' : 'Ouvir instruções'
+  const icone = estado === 'falando' ? <Pause size={16} /> : <Play size={16} fill="currentColor" />
+
+  return (
+    <button
+      onClick={toggleVoz}
+      className={`mt-4 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors w-full justify-center ${
+        estado === 'falando'
+          ? 'bg-[#EDE7F9] text-[#6B4EA8] border border-[#C9B3ED]'
+          : 'bg-[#9B7AD6] text-white'
+      }`}
+    >
+      {icone}
+      {label}
+    </button>
+  )
+}
 
 function TelaTimer({ treino, onConcluir, onVoltar }) {
   const [etapaIdx, setEtapaIdx] = useState(0)
@@ -14,62 +84,9 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
   const [concluido, setConcluido] = useState(false)
   const { config } = useConfiguracoes()
   const intervalRef = useRef(null)
-  const narradorRef = useRef(null)
-  const [narracaoAtiva, setNarracaoAtiva] = useState(true)
-  const avisou5sRef = useRef(false)
 
   const etapa = treino.etapas[etapaIdx]
   const totalEtapas = treino.etapas.length
-
-  // Cria instância do narrador uma vez
-  useEffect(() => {
-    narradorRef.current = criarNarrador()
-    return () => narradorRef.current?.parar()
-  }, [])
-
-  // Narra a etapa ao mudar (ou ao iniciar pela primeira vez)
-  useEffect(() => {
-    if (!iniciado) return
-    avisou5sRef.current = false
-    if (narracaoAtiva && narradorRef.current) {
-      narradorRef.current.falar(etapa.narracao, etapa.audioUrl)
-    }
-  }, [etapaIdx, iniciado])
-
-  // Aviso de 5 segundos
-  useEffect(() => {
-    if (
-      iniciado &&
-      narracaoAtiva &&
-      segundosRestantes === 5 &&
-      !avisou5sRef.current &&
-      !concluido
-    ) {
-      avisou5sRef.current = true
-      narradorRef.current?.falar(AVISO_5_SEGUNDOS)
-    }
-  }, [segundosRestantes, narracaoAtiva, concluido, iniciado])
-
-  // Narra conclusão
-  useEffect(() => {
-    if (concluido && narracaoAtiva && narradorRef.current) {
-      narradorRef.current.falar(AVISO_CONCLUSAO)
-    }
-  }, [concluido])
-
-  // Pausa/retoma narração junto com o timer
-  useEffect(() => {
-    if (!narradorRef.current || !iniciado) return
-    if (pausado) narradorRef.current.pausar()
-    else narradorRef.current.retomar()
-  }, [pausado, iniciado])
-
-  function toggleNarracao() {
-    setNarracaoAtiva((prev) => {
-      if (prev) narradorRef.current?.parar()
-      return !prev
-    })
-  }
 
   function comecar() {
     setIniciado(true)
@@ -100,7 +117,7 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
 
   function pularEtapa() {
     clearInterval(intervalRef.current)
-    narradorRef.current?.parar()
+    window.speechSynthesis?.cancel()
     const proximo = etapaIdx + 1
     if (proximo >= totalEtapas) {
       setConcluido(true)
@@ -201,10 +218,11 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
           </div>
         </div>
 
-        {/* Instrução da etapa */}
+        {/* Instrução da etapa + botão de narração */}
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#D8CCF0] w-full text-center">
           <h3 className="font-titulo text-lg text-[#9B7AD6] mb-2">{etapa.nome}</h3>
           <p className="text-[#3D2B6B] text-base leading-relaxed">{etapa.instrucao}</p>
+          <BotaoNarracao key={etapaIdx} texto={etapa.narracao} />
         </div>
 
         {/* Botão Começar — aparece só antes de iniciar */}
@@ -234,17 +252,6 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
             >
               <SkipForward size={20} />
               Pular
-            </button>
-            <button
-              onClick={toggleNarracao}
-              aria-label={narracaoAtiva ? 'Desativar narração' : 'Ativar narração'}
-              className={`p-3 rounded-2xl border transition-colors ${
-                narracaoAtiva
-                  ? 'bg-[#EDE7F9] border-[#C9B3ED] text-[#6B4EA8]'
-                  : 'bg-white border-[#D8CCF0] text-[#C9B3ED]'
-              }`}
-            >
-              {narracaoAtiva ? <Volume2 size={20} /> : <VolumeX size={20} />}
             </button>
           </div>
         )}
