@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { ArrowLeft, Play, Pause, SkipForward, Info } from 'lucide-react'
+import { ArrowLeft, Play, Pause, SkipForward, Info, Volume2, VolumeX } from 'lucide-react'
 import { treinos, avisoExercicios, comoContrair } from '../data/exercicios'
 import { useProgresso } from '../hooks/useProgresso'
 import { useConfiguracoes } from '../hooks/useConfiguracoes'
 import { tocarTrocaEtapa, tocarConclusao } from '../utils/som'
+import { criarNarrador, AVISO_5_SEGUNDOS, AVISO_CONCLUSAO } from '../utils/narrador'
 
 function TelaTimer({ treino, onConcluir, onVoltar }) {
   const [etapaIdx, setEtapaIdx] = useState(0)
@@ -12,9 +13,60 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
   const [concluido, setConcluido] = useState(false)
   const { config } = useConfiguracoes()
   const intervalRef = useRef(null)
+  const narradorRef = useRef(null)
+  const [narracaoAtiva, setNarracaoAtiva] = useState(true)
+  const avisou5sRef = useRef(false)
 
   const etapa = treino.etapas[etapaIdx]
   const totalEtapas = treino.etapas.length
+
+  // Cria instância do narrador uma vez
+  useEffect(() => {
+    narradorRef.current = criarNarrador()
+    return () => narradorRef.current?.parar()
+  }, [])
+
+  // Narra a etapa ao mudar
+  useEffect(() => {
+    avisou5sRef.current = false
+    if (narracaoAtiva && narradorRef.current) {
+      narradorRef.current.falar(etapa.narracao, etapa.audioUrl)
+    }
+  }, [etapaIdx])
+
+  // Aviso de 5 segundos
+  useEffect(() => {
+    if (
+      narracaoAtiva &&
+      segundosRestantes === 5 &&
+      !avisou5sRef.current &&
+      !concluido
+    ) {
+      avisou5sRef.current = true
+      narradorRef.current?.falar(AVISO_5_SEGUNDOS)
+    }
+  }, [segundosRestantes, narracaoAtiva, concluido])
+
+  // Narra conclusão
+  useEffect(() => {
+    if (concluido && narracaoAtiva && narradorRef.current) {
+      narradorRef.current.falar(AVISO_CONCLUSAO)
+    }
+  }, [concluido])
+
+  // Pausa/retoma narração junto com o timer
+  useEffect(() => {
+    if (!narradorRef.current) return
+    if (pausado) narradorRef.current.pausar()
+    else narradorRef.current.retomar()
+  }, [pausado])
+
+  function toggleNarracao() {
+    setNarracaoAtiva((prev) => {
+      if (prev) narradorRef.current?.parar()
+      return !prev
+    })
+  }
 
   useEffect(() => {
     if (pausado || concluido) return
@@ -40,6 +92,7 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
 
   function pularEtapa() {
     clearInterval(intervalRef.current)
+    narradorRef.current?.parar()
     const proximo = etapaIdx + 1
     if (proximo >= totalEtapas) {
       setConcluido(true)
@@ -142,7 +195,7 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
           <p className="text-[#3D2B6B] text-base leading-relaxed">{etapa.instrucao}</p>
         </div>
 
-        <div className="flex gap-4">
+        <div className="flex gap-3 items-center">
           <button
             onClick={() => setPausado((p) => !p)}
             className="flex items-center gap-2 px-6 py-3 bg-[#9B7AD6] text-white rounded-2xl font-semibold"
@@ -156,6 +209,17 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
           >
             <SkipForward size={20} />
             Pular
+          </button>
+          <button
+            onClick={toggleNarracao}
+            aria-label={narracaoAtiva ? 'Desativar narração' : 'Ativar narração'}
+            className={`p-3 rounded-2xl border transition-colors ${
+              narracaoAtiva
+                ? 'bg-[#EDE7F9] border-[#C9B3ED] text-[#6B4EA8]'
+                : 'bg-white border-[#D8CCF0] text-[#C9B3ED]'
+            }`}
+          >
+            {narracaoAtiva ? <Volume2 size={20} /> : <VolumeX size={20} />}
           </button>
         </div>
       </div>
