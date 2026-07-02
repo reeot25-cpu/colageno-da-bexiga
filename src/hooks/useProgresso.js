@@ -17,7 +17,16 @@ function progressoInicial() {
 function carregar() {
   try {
     const salvo = localStorage.getItem(CHAVE)
-    return salvo ? JSON.parse(salvo) : progressoInicial()
+    if (!salvo) return progressoInicial()
+    const dados = JSON.parse(salvo)
+    // Migração: dados antigos tinham `diaAtual` avançado manualmente.
+    // Reseta iniciouEm para agora para que o novo sistema de datas comece do zero.
+    if ('diaAtual' in dados) {
+      const migrado = { iniciouEm: Date.now(), concluidas: dados.concluidas ?? {} }
+      persistir(migrado)
+      return migrado
+    }
+    return dados
   } catch {
     return progressoInicial()
   }
