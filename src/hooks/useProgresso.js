@@ -1,14 +1,17 @@
 import { useState, useCallback } from 'react'
 import { diasRitual } from '../data/ritual'
 
-const CHAVE = 'colageno_progresso'
+const CHAVE        = 'colageno_progresso'
+const CHAVE_OFFSET = 'collagenflow_test_offset' // só usado em desenvolvimento
+
+// ── estado inicial ────────────────────────────────────────────────────────────
 
 function progressoInicial() {
   const concluidas = {}
   diasRitual.forEach(({ tarefas }) =>
     tarefas.forEach(({ id }) => (concluidas[id] = false))
   )
-  return { diaAtual: 1, iniciouEm: Date.now(), concluidas }
+  return { iniciouEm: Date.now(), concluidas }
 }
 
 function carregar() {
@@ -20,47 +23,62 @@ function carregar() {
   }
 }
 
-function salvar(estado) {
+function persistir(estado) {
   localStorage.setItem(CHAVE, JSON.stringify(estado))
 }
+
+// ── cálculo do dia desbloqueado ───────────────────────────────────────────────
+
+export function calcularDiaDesbloqueado(iniciouEm) {
+  // Offset em ms adicionado apenas no modo de teste (dev)
+  const offsetMs  = parseInt(localStorage.getItem(CHAVE_OFFSET) ?? '0', 10)
+  const agora     = Date.now() + offsetMs
+  const diasPassados = Math.floor((agora - iniciouEm) / (1000 * 60 * 60 * 24))
+  return Math.min(Math.max(diasPassados + 1, 1), diasRitual.length)
+}
+
+export function diasFaltando(dia, iniciouEm) {
+  const desbloqueado = calcularDiaDesbloqueado(iniciouEm)
+  return Math.max(dia - desbloqueado, 0)
+}
+
+// ── hook principal ────────────────────────────────────────────────────────────
 
 export function useProgresso() {
   const [estado, setEstado] = useState(carregar)
 
+  const diaDesbloqueado = calcularDiaDesbloqueado(estado.iniciouEm)
+
   const marcarTarefa = useCallback((tarefaId, valor) => {
     setEstado((prev) => {
       const novo = { ...prev, concluidas: { ...prev.concluidas, [tarefaId]: valor } }
-      salvar(novo)
-      return novo
-    })
-  }, [])
-
-  const avancarDia = useCallback((dia) => {
-    setEstado((prev) => {
-      const novo = { ...prev, diaAtual: Math.max(prev.diaAtual, dia) }
-      salvar(novo)
+      persistir(novo)
       return novo
     })
   }, [])
 
   const reiniciar = useCallback(() => {
     const novo = progressoInicial()
-    salvar(novo)
+    persistir(novo)
+    localStorage.removeItem(CHAVE_OFFSET)
     setEstado(novo)
   }, [])
 
-  // Progresso de um dia específico
+  // Força releitura do estado (usado pelo modo de teste após mudar o offset)
+  const recarregar = useCallback(() => {
+    setEstado((prev) => ({ ...prev }))
+  }, [])
+
   function progressoDia(dia) {
     const tarefas = diasRitual[dia - 1]?.tarefas ?? []
-    const feitas = tarefas.filter((t) => estado.concluidas[t.id]).length
+    const feitas  = tarefas.filter((t) => estado.concluidas[t.id]).length
     return { feitas, total: tarefas.length, pct: tarefas.length ? (feitas / tarefas.length) * 100 : 0 }
   }
 
-  // Progresso geral dos 7 dias (todas as tarefas)
   function progressoGeral() {
-    const todas = diasRitual.flatMap((d) => d.tarefas)
+    const todas  = diasRitual.flatMap((d) => d.tarefas)
     const feitas = todas.filter((t) => estado.concluidas[t.id]).length
-    const diasCompletos = diasRitual.filter(({ dia, tarefas }) =>
+    const diasCompletos = diasRitual.filter(({ tarefas }) =>
       tarefas.every((t) => estado.concluidas[t.id])
     ).length
     return {
@@ -71,7 +89,15 @@ export function useProgresso() {
     }
   }
 
-  const diaAtivo = estado.diaAtual
-
-  return { estado, marcarTarefa, avancarDia, reiniciar, progressoDia, progressoGeral, diaAtivo }
+  return {
+    estado,
+    marcarTarefa,
+    reiniciar,
+    recarregar,
+    progressoDia,
+    progressoGeral,
+    diaAtivo: diaDesbloqueado,       // alias legado para Inicio.jsx
+    diaDesbloqueado,
+    iniciouEm: estado.iniciouEm,
+  }
 }
