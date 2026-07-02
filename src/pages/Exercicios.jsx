@@ -9,6 +9,7 @@ import { criarNarrador, AVISO_5_SEGUNDOS, AVISO_CONCLUSAO } from '../utils/narra
 function TelaTimer({ treino, onConcluir, onVoltar }) {
   const [etapaIdx, setEtapaIdx] = useState(0)
   const [segundosRestantes, setSegundosRestantes] = useState(treino.etapas[0].segundos)
+  const [iniciado, setIniciado] = useState(false)
   const [pausado, setPausado] = useState(false)
   const [concluido, setConcluido] = useState(false)
   const { config } = useConfiguracoes()
@@ -26,17 +27,19 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
     return () => narradorRef.current?.parar()
   }, [])
 
-  // Narra a etapa ao mudar
+  // Narra a etapa ao mudar (ou ao iniciar pela primeira vez)
   useEffect(() => {
+    if (!iniciado) return
     avisou5sRef.current = false
     if (narracaoAtiva && narradorRef.current) {
       narradorRef.current.falar(etapa.narracao, etapa.audioUrl)
     }
-  }, [etapaIdx])
+  }, [etapaIdx, iniciado])
 
   // Aviso de 5 segundos
   useEffect(() => {
     if (
+      iniciado &&
       narracaoAtiva &&
       segundosRestantes === 5 &&
       !avisou5sRef.current &&
@@ -45,7 +48,7 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
       avisou5sRef.current = true
       narradorRef.current?.falar(AVISO_5_SEGUNDOS)
     }
-  }, [segundosRestantes, narracaoAtiva, concluido])
+  }, [segundosRestantes, narracaoAtiva, concluido, iniciado])
 
   // Narra conclusão
   useEffect(() => {
@@ -56,10 +59,10 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
 
   // Pausa/retoma narração junto com o timer
   useEffect(() => {
-    if (!narradorRef.current) return
+    if (!narradorRef.current || !iniciado) return
     if (pausado) narradorRef.current.pausar()
     else narradorRef.current.retomar()
-  }, [pausado])
+  }, [pausado, iniciado])
 
   function toggleNarracao() {
     setNarracaoAtiva((prev) => {
@@ -68,8 +71,13 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
     })
   }
 
+  function comecar() {
+    setIniciado(true)
+    setPausado(false)
+  }
+
   useEffect(() => {
-    if (pausado || concluido) return
+    if (!iniciado || pausado || concluido) return
     intervalRef.current = setInterval(() => {
       setSegundosRestantes((s) => {
         if (s <= 1) {
@@ -88,7 +96,7 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
       })
     }, 1000)
     return () => clearInterval(intervalRef.current)
-  }, [etapaIdx, pausado, concluido, config.somAtivo])
+  }, [etapaIdx, iniciado, pausado, concluido, config.somAtivo])
 
   function pularEtapa() {
     clearInterval(intervalRef.current)
@@ -104,7 +112,7 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
 
   const minutos = Math.floor(segundosRestantes / 60)
   const segs = segundosRestantes % 60
-  const pctTimer = ((etapa.segundos - segundosRestantes) / etapa.segundos) * 100
+  const pctTimer = iniciado ? ((etapa.segundos - segundosRestantes) / etapa.segundos) * 100 : 0
 
   if (concluido) {
     return (
@@ -144,20 +152,18 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
               Etapa {etapaIdx + 1} de {totalEtapas}
             </span>
             <span className="text-[#9B7AD6] font-bold text-sm">
-              {Math.round(((etapaIdx) / totalEtapas) * 100)}% concluído
+              {Math.round((etapaIdx / totalEtapas) * 100)}% concluído
             </span>
           </div>
-          {/* Barra contínua */}
           <div className="bg-[#E8E0F8] rounded-full h-3 overflow-hidden mb-3">
             <div
               className="bg-[#9B7AD6] h-full rounded-full transition-all duration-500"
               style={{ width: `${(etapaIdx / totalEtapas) * 100}%` }}
             />
           </div>
-          {/* Segmentos por etapa */}
           <div className="flex gap-1">
             {treino.etapas.map((et, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
+              <div key={i} className="flex-1">
                 <div
                   className="w-full h-1.5 rounded-full transition-all duration-300"
                   style={{
@@ -170,6 +176,7 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
           </div>
         </div>
 
+        {/* Timer circular */}
         <div className="relative w-48 h-48">
           <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
             <circle cx="50" cy="50" r="45" fill="none" stroke="#D8CCF0" strokeWidth="8" />
@@ -186,42 +193,61 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
             <span className="font-titulo text-4xl font-bold text-[#3D2B6B]">
               {minutos > 0 ? `${minutos}:${String(segs).padStart(2, '0')}` : segs}
             </span>
-            {minutos === 0 && <span className="text-[#7B6B9A] text-xs">segundos</span>}
+            {minutos === 0 && (
+              <span className="text-[#7B6B9A] text-xs">
+                {iniciado ? 'segundos' : 'seg para começar'}
+              </span>
+            )}
           </div>
         </div>
 
+        {/* Instrução da etapa */}
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#D8CCF0] w-full text-center">
           <h3 className="font-titulo text-lg text-[#9B7AD6] mb-2">{etapa.nome}</h3>
           <p className="text-[#3D2B6B] text-base leading-relaxed">{etapa.instrucao}</p>
         </div>
 
-        <div className="flex gap-3 items-center">
+        {/* Botão Começar — aparece só antes de iniciar */}
+        {!iniciado && (
           <button
-            onClick={() => setPausado((p) => !p)}
-            className="flex items-center gap-2 px-6 py-3 bg-[#9B7AD6] text-white rounded-2xl font-semibold"
+            onClick={comecar}
+            className="w-full py-4 bg-gradient-to-r from-[#9B7AD6] to-[#7B5ABE] text-white rounded-2xl font-semibold text-lg flex items-center justify-center gap-3 shadow-lg active:scale-95 transition-transform"
           >
-            {pausado ? <Play size={20} /> : <Pause size={20} />}
-            {pausado ? 'Continuar' : 'Pausar'}
+            <Play size={22} fill="white" />
+            Estou pronta — Começar!
           </button>
-          <button
-            onClick={pularEtapa}
-            className="flex items-center gap-2 px-5 py-3 bg-white border border-[#D8CCF0] text-[#7B6B9A] rounded-2xl font-semibold"
-          >
-            <SkipForward size={20} />
-            Pular
-          </button>
-          <button
-            onClick={toggleNarracao}
-            aria-label={narracaoAtiva ? 'Desativar narração' : 'Ativar narração'}
-            className={`p-3 rounded-2xl border transition-colors ${
-              narracaoAtiva
-                ? 'bg-[#EDE7F9] border-[#C9B3ED] text-[#6B4EA8]'
-                : 'bg-white border-[#D8CCF0] text-[#C9B3ED]'
-            }`}
-          >
-            {narracaoAtiva ? <Volume2 size={20} /> : <VolumeX size={20} />}
-          </button>
-        </div>
+        )}
+
+        {/* Controles durante o exercício */}
+        {iniciado && (
+          <div className="flex gap-3 items-center">
+            <button
+              onClick={() => setPausado((p) => !p)}
+              className="flex items-center gap-2 px-6 py-3 bg-[#9B7AD6] text-white rounded-2xl font-semibold"
+            >
+              {pausado ? <Play size={20} /> : <Pause size={20} />}
+              {pausado ? 'Continuar' : 'Pausar'}
+            </button>
+            <button
+              onClick={pularEtapa}
+              className="flex items-center gap-2 px-5 py-3 bg-white border border-[#D8CCF0] text-[#7B6B9A] rounded-2xl font-semibold"
+            >
+              <SkipForward size={20} />
+              Pular
+            </button>
+            <button
+              onClick={toggleNarracao}
+              aria-label={narracaoAtiva ? 'Desativar narração' : 'Ativar narração'}
+              className={`p-3 rounded-2xl border transition-colors ${
+                narracaoAtiva
+                  ? 'bg-[#EDE7F9] border-[#C9B3ED] text-[#6B4EA8]'
+                  : 'bg-white border-[#D8CCF0] text-[#C9B3ED]'
+              }`}
+            >
+              {narracaoAtiva ? <Volume2 size={20} /> : <VolumeX size={20} />}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
