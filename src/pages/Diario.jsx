@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import {
   ChevronLeft, ChevronRight, Droplets, Zap, AlertTriangle,
-  TrendingDown, TrendingUp, Minus, Heart, ShieldCheck,
+  TrendingDown, TrendingUp, Minus, Heart, ShieldCheck, BarChart2,
 } from 'lucide-react'
 import { useDiario } from '../hooks/useDiario'
+import RelatorioDia from '../components/RelatorioDia'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -282,9 +283,18 @@ export default function Diario() {
   const [dataAtiva, setDataAtiva] = useState(hoje)
   const { obterDia, salvar, historico } = useDiario()
 
+  const [relatorioAberto, setRelatorioAberto] = useState(false)
+
   const ehHoje = mesmoDia(dataAtiva, hoje)
   const entrada = obterDia(dataAtiva)
   const hist14  = historico(14)
+
+  // Dados de ontem para comparativo
+  const ontem = (() => {
+    const d = new Date(dataAtiva); d.setDate(d.getDate() - 1)
+    const e = obterDia(d)
+    return (e.idas === 0 && e.urgencias === 0 && e.escapes === 0) ? null : e
+  })()
 
   function mudarDia(delta) {
     const nova = new Date(dataAtiva)
@@ -388,6 +398,17 @@ export default function Diario() {
         />
       ))}
 
+      {/* Botão relatório — só aparece no dia atual */}
+      {ehHoje && (
+        <button
+          onClick={() => setRelatorioAberto(true)}
+          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-gradient-to-r from-[#9B7AD6] to-[#6B4EA8] text-white font-semibold text-base shadow-md active:opacity-90 transition-opacity"
+        >
+          <BarChart2 size={20} />
+          Ver meu relatório de hoje
+        </button>
+      )}
+
       {/* Gráfico de evolução */}
       <PainelEvolucao hist14={hist14} metricas={metricas} />
 
@@ -422,5 +443,15 @@ export default function Diario() {
       </div>
 
     </div>
+
+    {/* Modal de relatório */}
+    {relatorioAberto && (
+      <RelatorioDia
+        hoje={entrada}
+        ontem={ontem}
+        historico={hist14}
+        onFechar={() => setRelatorioAberto(false)}
+      />
+    )}
   )
 }
