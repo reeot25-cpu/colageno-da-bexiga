@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { ArrowLeft, Play, Pause, SkipForward, Info, Timer, RotateCcw } from 'lucide-react'
+import { ArrowLeft, Play, Pause, SkipForward, Info, Timer, RotateCcw, Lock } from 'lucide-react'
 import { treinos, avisoExercicios, comoContrair } from '../data/exercicios'
 import {
   gruposInvisiveis,
@@ -10,6 +10,7 @@ import { useProgresso } from '../hooks/useProgresso'
 import { useConfiguracoes } from '../hooks/useConfiguracoes'
 import { getNomeSalvo } from '../hooks/useNome'
 import { primeiroNome } from '../utils/saudacao'
+import { LINK_ASSINATURA } from '../utils/acesso'
 import { tocarTrocaEtapa, tocarConclusao } from '../utils/som'
 
 // ── Seleção de voz feminina ───────────────────────────────────────────────────
@@ -230,6 +231,36 @@ function SecaoInvisiveis() {
         </div>
       ))}
     </div>
+  )
+}
+
+// ── Card Premium bloqueado (Treino Avançado) ─────────────────────────────────
+// Sempre bloqueado — leva para a página de assinatura. Quando existir o backend
+// de assinatura, é aqui que o conteúdo avançado será liberado para assinantes.
+function CardPremiumBloqueado() {
+  return (
+    <a
+      href={LINK_ASSINATURA}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block bg-white rounded-2xl p-5 shadow-sm border border-[#D8CCF0] relative overflow-hidden active:scale-[0.99] transition-transform"
+    >
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">✨</span>
+          <h3 className="font-titulo text-lg text-[#3D2B6B] font-semibold">Treino Avançado</h3>
+        </div>
+        <span className="flex items-center gap-1 bg-[#EDE7F9] text-[#6B4EA8] font-bold text-xs px-3 py-1 rounded-full">
+          <Lock size={12} /> Premium
+        </span>
+      </div>
+      <p className="text-[#7B6B9A] text-sm mb-4">
+        Rotina completa de 10 minutos para levar seu assoalho pélvico ao próximo nível.
+      </p>
+      <div className="w-full py-3.5 bg-[#EDE7F9] text-[#6B4EA8] rounded-xl font-semibold text-base flex items-center justify-center gap-2">
+        <Lock size={16} /> Disponível na assinatura 💜
+      </div>
+    </a>
   )
 }
 
@@ -568,6 +599,9 @@ export default function Exercicios() {
                 </button>
               </div>
             ))}
+
+            {/* Treino avançado — sempre bloqueado (Premium) */}
+            <CardPremiumBloqueado />
           </div>
         </>
       )}

@@ -5,6 +5,7 @@ import AvisoAtualizacao from './components/AvisoAtualizacao'
 import PedirPermissaoNotificacao from './components/PedirPermissaoNotificacao'
 import SplashScreen from './components/SplashScreen'
 import BoasVindasNome from './components/BoasVindasNome'
+import TelaBloqueio from './components/TelaBloqueio'
 import Inicio from './pages/Inicio'
 import Chas from './pages/Chas'
 import Receitas from './pages/Receitas'
@@ -17,11 +18,13 @@ import Diario from './pages/Diario'
 import { useConfiguracoes } from './hooks/useConfiguracoes'
 import { useBadgeDiario } from './hooks/useBadgeDiario'
 import { useNome } from './hooks/useNome'
+import { useAcesso } from './hooks/useAcesso'
 import { inicializarNotificacoes } from './utils/notificacoes'
 
 function AppInner() {
   const { config } = useConfiguracoes()
   const { nome, salvarNome } = useNome()
+  const acesso = useAcesso()
   const [splashDone, setSplashDone] = useState(false)
 
   useEffect(() => {
@@ -42,6 +45,9 @@ function AppInner() {
 
       {precisaOnboarding ? (
         <BoasVindasNome onSalvar={salvarNome} />
+      ) : acesso.expirado ? (
+        // Fim dos 21 dias → tela de bloqueio acolhedora (substitui o app)
+        <TelaBloqueio />
       ) : (
         <>
           <main className="flex-1 overflow-y-auto">

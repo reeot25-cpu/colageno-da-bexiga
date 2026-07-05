@@ -4,7 +4,9 @@ import IconAssoalhoPelvico from '../components/IconAssoalhoPelvico'
 import { useProgresso } from '../hooks/useProgresso'
 import { useMensagemBoasVindas } from '../hooks/useMensagemBoasVindas'
 import { useNome } from '../hooks/useNome'
+import { useAcesso } from '../hooks/useAcesso'
 import { saudacaoHorario, primeiroNome } from '../utils/saudacao'
+import AvisoFimAcesso from '../components/AvisoFimAcesso'
 import { diasRitual } from '../data/ritual'
 
 const atalhos = [
@@ -39,6 +41,7 @@ export default function Inicio() {
   const mensagem = useMensagemBoasVindas()
   const { nome } = useNome()
   const primeiro = primeiroNome(nome)
+  const acesso = useAcesso()
   const prog  = progressoDia(diaAtivo)
   const geral = progressoGeral()
 
@@ -66,7 +69,14 @@ export default function Inicio() {
             <>Olá! Que bom<br />te ver por aqui 💜</>
           )}
         </h1>
+        {/* Contagem regressiva discreta do período de acesso */}
+        <span className="inline-block mt-2 text-xs font-semibold text-[#9B7AD6] bg-[#EDE7F9] border border-[#D8CCF0] rounded-full px-3 py-1">
+          Você está no Dia {acesso.diaAtual} de {acesso.total} 💜
+        </span>
       </div>
+
+      {/* Aviso gentil nos últimos dias (18, 19, 20 e 21) */}
+      {acesso.faltam <= 3 && <AvisoFimAcesso faltam={acesso.faltam} />}
 
       {/* Card de boas-vindas dinâmico */}
       <CardBoasVindas mensagem={mensagem} />
