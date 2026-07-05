@@ -8,6 +8,8 @@ import {
 } from '../data/exerciciosInvisiveis'
 import { useProgresso } from '../hooks/useProgresso'
 import { useConfiguracoes } from '../hooks/useConfiguracoes'
+import { getNomeSalvo } from '../hooks/useNome'
+import { primeiroNome } from '../utils/saudacao'
 import { tocarTrocaEtapa, tocarConclusao } from '../utils/som'
 
 // ── Seleção de voz feminina ───────────────────────────────────────────────────
@@ -287,10 +289,13 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
   const pctTimer = iniciado ? ((etapa.segundos - segundosRestantes) / etapa.segundos) * 100 : 0
 
   if (concluido) {
+    const nome = primeiroNome(getNomeSalvo())
     return (
       <div className="flex flex-col items-center justify-center gap-6 px-6 py-12 text-center">
         <div className="text-6xl">🎉</div>
-        <h2 className="font-titulo text-2xl text-[#3D2B6B]">Parabéns!</h2>
+        <h2 className="font-titulo text-2xl text-[#3D2B6B]">
+          {nome ? `Parabéns, ${nome}!` : 'Parabéns!'}
+        </h2>
         <p className="text-[#7B6B9A] text-base">
           Você completou o <strong>{treino.nome}</strong>. Seu corpo agradece o cuidado de hoje! 🌸
         </p>

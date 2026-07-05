@@ -1,6 +1,8 @@
-import { ArrowLeft, Volume2, VolumeX, Bell, BellOff, Info, Shield } from 'lucide-react'
+import { useState } from 'react'
+import { ArrowLeft, Volume2, VolumeX, Bell, BellOff, Info, Shield, User, Check } from 'lucide-react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useConfiguracoes } from '../hooks/useConfiguracoes'
+import { useNome } from '../hooks/useNome'
 import { tocarTrocaEtapa } from '../utils/som'
 import {
   pedirPermissao,
@@ -42,6 +44,18 @@ function Toggle({ ativo, onChange, label, descricao, iconeAtivo, iconeDesativo }
 export default function Configuracoes() {
   const navigate = useNavigate()
   const { config, alterarSom, alterarLembretes } = useConfiguracoes()
+  const { nome, salvarNome } = useNome()
+
+  const [nomeInput, setNomeInput] = useState(nome)
+  const [salvo, setSalvo] = useState(false)
+  const nomeMudou = nomeInput.trim() !== nome && nomeInput.trim().length > 0
+
+  function handleSalvarNome() {
+    if (!nomeMudou) return
+    salvarNome(nomeInput.trim())
+    setSalvo(true)
+    setTimeout(() => setSalvo(false), 2000)
+  }
 
   const permissao = permissaoAtual()
   const bloqueado = permissao === 'denied'
@@ -90,6 +104,42 @@ export default function Configuracoes() {
           <ArrowLeft size={20} className="text-[#3D2B6B]" />
         </button>
         <h1 className="font-titulo text-2xl text-[#3D2B6B]">Configurações</h1>
+      </div>
+
+      {/* Seu nome */}
+      <div className="bg-white rounded-2xl shadow-sm border border-[#D8CCF0] p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="p-2 rounded-xl bg-[#EDE7F9]">
+            <User size={20} className="text-[#9B7AD6]" />
+          </div>
+          <div>
+            <p className="font-semibold text-[#3D2B6B] text-base">Como posso te chamar?</p>
+            <p className="text-[#7B6B9A] text-sm mt-0.5">O nome que uso pra falar com você 💜</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={nomeInput}
+            onChange={(e) => { setNomeInput(e.target.value); setSalvo(false) }}
+            placeholder="Seu nome ou apelido"
+            maxLength={30}
+            className="flex-1 min-w-0 px-4 py-3 rounded-xl bg-[#F5F0FF] border border-[#D8CCF0] text-[#3D2B6B] placeholder:text-[#B8A8D8] focus:outline-none focus:border-[#9B7AD6]"
+          />
+          <button
+            onClick={handleSalvarNome}
+            disabled={!nomeMudou && !salvo}
+            className={`shrink-0 px-4 py-3 rounded-xl font-semibold text-sm flex items-center gap-1.5 transition-colors ${
+              salvo
+                ? 'bg-[#E8E0F8] text-[#6B4EA8]'
+                : nomeMudou
+                  ? 'bg-[#9B7AD6] text-white'
+                  : 'bg-[#D8CCF0] text-white/70'
+            }`}
+          >
+            {salvo ? <><Check size={16} /> Salvo</> : 'Salvar'}
+          </button>
+        </div>
       </div>
 
       {/* Som + Lembretes */}

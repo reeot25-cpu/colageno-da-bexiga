@@ -4,6 +4,8 @@ import {
   TrendingDown, TrendingUp, Minus, Heart, ShieldCheck, BarChart2,
 } from 'lucide-react'
 import { useDiario } from '../hooks/useDiario'
+import { getNomeSalvo } from '../hooks/useNome'
+import { primeiroNome } from '../utils/saudacao'
 import RelatorioDia from '../components/RelatorioDia'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -114,12 +116,15 @@ function calcMensagem(tendencia, tipo) {
 
 function CardIncentivo({ mensagem }) {
   if (!mensagem) return null
+  const nome = primeiroNome(getNomeSalvo())
   return (
     <div className="bg-gradient-to-br from-[#9B7AD6] to-[#6B4EA8] rounded-2xl p-5 shadow-md text-white">
       <div className="flex gap-3 items-start">
         <span className="text-3xl shrink-0">{mensagem.emoji}</span>
         <div>
-          <p className="font-semibold text-white text-sm leading-snug mb-1">Você está melhorando!</p>
+          <p className="font-semibold text-white text-sm leading-snug mb-1">
+            {nome ? `${nome}, você está melhorando!` : 'Você está melhorando!'}
+          </p>
           <p className="text-[#E0D4F8] text-sm leading-relaxed">{mensagem.texto}</p>
         </div>
       </div>

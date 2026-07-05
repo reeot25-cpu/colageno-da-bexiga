@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
 import { X, TrendingDown, TrendingUp, Minus, ShieldCheck, ChevronRight } from 'lucide-react'
 import { gerarRelatorio } from '../utils/gerarRelatorio'
+import { comNome } from '../utils/saudacao'
+import { getNomeSalvo } from '../hooks/useNome'
 
 // ── Seta de tendência ─────────────────────────────────────────────────────────
 
@@ -76,6 +78,7 @@ const COR_CENARIO = {
 export default function RelatorioDia({ hoje, ontem, historico, onFechar }) {
   // Gera o relatório (trocar por gerarRelatorioIA() no futuro)
   const rel = gerarRelatorio({ hoje, ontem, historico })
+  const nome = getNomeSalvo()
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center">
@@ -104,7 +107,7 @@ export default function RelatorioDia({ hoje, ontem, historico, onFechar }) {
           {/* Emoji grande + mensagem principal */}
           <div className="flex gap-4 items-start bg-white/15 rounded-2xl p-4">
             <span className="text-4xl shrink-0">{ICONE_CENARIO[rel.cenario]}</span>
-            <p className="text-white text-sm leading-relaxed">{rel.mensagemPrincipal}</p>
+            <p className="text-white text-sm leading-relaxed">{comNome(nome, rel.mensagemPrincipal)}</p>
           </div>
         </div>
 

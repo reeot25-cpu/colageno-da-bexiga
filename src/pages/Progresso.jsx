@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { CheckCircle2, Circle, Lock, Star, RotateCcw, Flag } from 'lucide-react'
 import { diasRitual } from '../data/ritual'
 import { useProgresso, diasFaltando } from '../hooks/useProgresso'
+import { getNomeSalvo } from '../hooks/useNome'
+import { primeiroNome, comNome } from '../utils/saudacao'
 import ModeTeste from '../components/ModeTeste'
 
 // ── Modal de resumo do dia ────────────────────────────────────────────────────
@@ -9,6 +11,7 @@ import ModeTeste from '../components/ModeTeste'
 function MensagemDia({ dia, feitas, total, onFechar }) {
   const completo = feitas === total && total > 0
   const nenhumaFeita = feitas === 0
+  const nome = primeiroNome(getNomeSalvo())
 
   const msgCompleto = [
     `Você é incrível! Completou todos os ${total} itens do Dia ${dia}. Cada escolha conta — e hoje você escolheu se cuidar! 🌸`,
@@ -26,7 +29,7 @@ function MensagemDia({ dia, feitas, total, onFechar }) {
   ]
 
   const msgs = completo ? msgCompleto : nenhumaFeita ? msgNenhuma : msgParcial
-  const texto = msgs[dia % msgs.length]
+  const texto = comNome(nome, msgs[dia % msgs.length])
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center p-4">
@@ -35,7 +38,11 @@ function MensagemDia({ dia, feitas, total, onFechar }) {
           <span className="text-5xl">{completo ? '🌟' : nenhumaFeita ? '🤗' : '🌷'}</span>
         </div>
         <h3 className="font-titulo text-xl text-[#3D2B6B] text-center mb-3">
-          {completo ? `Dia ${dia} completo!` : nenhumaFeita ? 'Amanhã é um novo dia!' : 'Você se cuidou hoje!'}
+          {completo
+            ? (nome ? `Parabéns, ${nome}!` : `Dia ${dia} completo!`)
+            : nenhumaFeita
+              ? 'Amanhã é um novo dia!'
+              : (nome ? `Você se cuidou hoje, ${nome}!` : 'Você se cuidou hoje!')}
         </h3>
 
         {/* Barra de progresso no modal */}

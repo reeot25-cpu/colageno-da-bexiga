@@ -3,6 +3,8 @@ import { ChevronRight, Sparkles, Settings, ShoppingBag } from 'lucide-react'
 import IconAssoalhoPelvico from '../components/IconAssoalhoPelvico'
 import { useProgresso } from '../hooks/useProgresso'
 import { useMensagemBoasVindas } from '../hooks/useMensagemBoasVindas'
+import { useNome } from '../hooks/useNome'
+import { saudacaoHorario, primeiroNome } from '../utils/saudacao'
 import { diasRitual } from '../data/ritual'
 
 const atalhos = [
@@ -35,6 +37,8 @@ function CardBoasVindas({ mensagem }) {
 export default function Inicio() {
   const { diaAtivo, progressoDia, progressoGeral, estado } = useProgresso()
   const mensagem = useMensagemBoasVindas()
+  const { nome } = useNome()
+  const primeiro = primeiroNome(nome)
   const prog  = progressoDia(diaAtivo)
   const geral = progressoGeral()
 
@@ -56,7 +60,11 @@ export default function Inicio() {
       {/* Saudação */}
       <div>
         <h1 className="font-titulo text-2xl text-[#3D2B6B] leading-tight">
-          Olá! Que bom<br />te ver por aqui 💜
+          {primeiro ? (
+            <>{saudacaoHorario()}, {primeiro}!<br />Que bom te ver por aqui 💜</>
+          ) : (
+            <>Olá! Que bom<br />te ver por aqui 💜</>
+          )}
         </h1>
       </div>
 
