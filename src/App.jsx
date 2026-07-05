@@ -14,6 +14,7 @@ import Configuracoes from './pages/Configuracoes'
 import Produtos from './pages/Produtos'
 import Diario from './pages/Diario'
 import { useConfiguracoes } from './hooks/useConfiguracoes'
+import { useBadgeDiario } from './hooks/useBadgeDiario'
 import { inicializarNotificacoes } from './utils/notificacoes'
 
 function AppInner() {
@@ -23,6 +24,9 @@ function AppInner() {
   useEffect(() => {
     inicializarNotificacoes(config.lembretesAtivos)
   }, [config.lembretesAtivos])
+
+  // Badge no ícone do app (respeita a config de lembretes)
+  useBadgeDiario(config.lembretesAtivos)
 
   return (
     <div className="flex flex-col min-h-dvh bg-[#EDE7F9] max-w-lg mx-auto w-full">
