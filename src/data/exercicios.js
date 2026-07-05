@@ -132,6 +132,12 @@ export const treinos = [
     ],
   },
 
+  // ─── 🔒 PREMIUM — Treino Avançado (oculto por enquanto) ───────────────────────
+  // Categoria de exercícios avançados desativada a pedido. Para REATIVAR no futuro,
+  // basta remover o /* abaixo e o */ que o fecha (logo após o objeto). A página de
+  // Exercícios renderiza `treinos` dinamicamente, então ele volta a aparecer sozinho
+  // na lista. É aqui também que futuros treinos Premium podem ser adicionados.
+  /*
   {
     id: 'completo',
     nome: 'Treino Completo',
@@ -229,4 +235,5 @@ export const treinos = [
       },
     ],
   },
+  */
 ]
