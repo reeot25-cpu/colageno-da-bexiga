@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { ArrowLeft, Play, Pause, SkipForward, Info, Timer, RotateCcw, Lock } from 'lucide-react'
+import GuiaVisualExercicio from '../components/GuiaVisualExercicio'
 import { treinos, avisoExercicios, comoContrair } from '../data/exercicios'
 import {
   gruposInvisiveis,
@@ -408,6 +409,14 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
             )}
           </div>
         </div>
+
+        {/* Guia visual de pulsação */}
+        <GuiaVisualExercicio
+          nomeEtapa={etapa.nome}
+          segundosRestantes={segundosRestantes}
+          duracaoTotal={etapa.segundos}
+          ativo={iniciado && !pausado && !concluido}
+        />
 
         {/* Instrução da etapa + botão de narração */}
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#D8CCF0] w-full text-center">
