@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom'
-import { ChevronRight, Sparkles, Settings, ShoppingBag } from 'lucide-react'
+import { ChevronRight, Sparkles, Settings, ShoppingBag, Flame, Trophy } from 'lucide-react'
 import IconAssoalhoPelvico from '../components/IconAssoalhoPelvico'
 import { useProgresso } from '../hooks/useProgresso'
 import { useMensagemBoasVindas } from '../hooks/useMensagemBoasVindas'
 import { useNome } from '../hooks/useNome'
 import { useAcesso } from '../hooks/useAcesso'
+import { useHistoricoExercicios } from '../hooks/useHistoricoExercicios'
 import { saudacaoHorario, primeiroNome } from '../utils/saudacao'
 import AvisoFimAcesso from '../components/AvisoFimAcesso'
 import { diasRitual } from '../data/ritual'
@@ -42,6 +43,7 @@ export default function Inicio() {
   const { nome } = useNome()
   const primeiro = primeiroNome(nome)
   const acesso = useAcesso()
+  const { stats, treinoHoje } = useHistoricoExercicios()
   const prog  = progressoDia(diaAtivo)
   const geral = progressoGeral()
 
@@ -80,6 +82,41 @@ export default function Inicio() {
 
       {/* Card de boas-vindas dinâmico */}
       <CardBoasVindas mensagem={mensagem} />
+
+      {/* Card de streak de exercícios */}
+      {(stats.totalTreinos > 0 || treinoHoje.length > 0) && (
+        <Link to="/exercicios" className="block">
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-[#D8CCF0] flex items-center gap-4">
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+              stats.streak > 0
+                ? 'bg-gradient-to-br from-[#FF8C42] to-[#F5C842]'
+                : 'bg-[#EDE7F9]'
+            }`}>
+              {stats.streak > 0
+                ? <Flame size={24} className="text-white" />
+                : <Trophy size={24} className="text-[#9B7AD6]" />
+              }
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <p className="font-semibold text-[#3D2B6B] text-base">
+                  {stats.streak > 0
+                    ? `${stats.streak} dia${stats.streak > 1 ? 's' : ''} seguido${stats.streak > 1 ? 's' : ''} 🔥`
+                    : `${stats.totalTreinos} treino${stats.totalTreinos > 1 ? 's' : ''} feito${stats.totalTreinos > 1 ? 's' : ''}`
+                  }
+                </p>
+              </div>
+              <p className="text-[#7B6B9A] text-sm">
+                {treinoHoje.length > 0
+                  ? `Hoje: ${treinoHoje.length} treino${treinoHoje.length > 1 ? 's' : ''} concluído${treinoHoje.length > 1 ? 's' : ''} ✓`
+                  : 'Faça seu treino de hoje →'
+                }
+              </p>
+            </div>
+            <ChevronRight size={18} className="text-[#9B7AD6] shrink-0" />
+          </div>
+        </Link>
+      )}
 
       {/* Card Ritual 7 Dias */}
       <Link to="/progresso" className="block">

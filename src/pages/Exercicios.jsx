@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { ArrowLeft, Play, Pause, SkipForward, Info, Timer, RotateCcw, Lock } from 'lucide-react'
+import { ArrowLeft, Play, Pause, SkipForward, Info, Timer, RotateCcw, Lock, Flame, Trophy, Star, Calendar } from 'lucide-react'
 import GuiaVisualExercicio from '../components/GuiaVisualExercicio'
 import { treinos, avisoExercicios, comoContrair } from '../data/exercicios'
 import {
@@ -9,6 +9,7 @@ import {
 } from '../data/exerciciosInvisiveis'
 import { useProgresso } from '../hooks/useProgresso'
 import { useConfiguracoes } from '../hooks/useConfiguracoes'
+import { useHistoricoExercicios } from '../hooks/useHistoricoExercicios'
 import { getNomeSalvo } from '../hooks/useNome'
 import { primeiroNome } from '../utils/saudacao'
 import { LINK_ASSINATURA } from '../utils/acesso'
@@ -124,6 +125,113 @@ function BotaoNarracao({ texto, rate = 0.88, pitch = 1.05 }) {
       {icone}
       {label}
     </button>
+  )
+}
+
+// ── Mensagens motivacionais de conclusão ──────────────────────────────────────
+const FRASES_CONCLUSAO = [
+  'Seu assoalho pélvico está ficando mais forte a cada treino!',
+  'Cada contração conta. Você está construindo uma base sólida!',
+  'Consistência é o segredo — e você está nesse caminho!',
+  'Seu corpo sente cada exercício, mesmo quando você não percebe.',
+  'Mais um dia de cuidado com você mesma. Isso é lindo!',
+  'Cada treino é uma vitória silenciosa. Continue assim!',
+  'Você está investindo na sua saúde de um jeito que poucas fazem.',
+]
+
+function TelaConclusao({ treino, onConcluir, onVoltar }) {
+  const nome = primeiroNome(getNomeSalvo())
+  const { registrarTreino, stats } = useHistoricoExercicios()
+  const [registrado, setRegistrado] = useState(false)
+  const [frase] = useState(() => FRASES_CONCLUSAO[Math.floor(Math.random() * FRASES_CONCLUSAO.length)])
+
+  function registrar() {
+    registrarTreino(treino)
+    setRegistrado(true)
+    onConcluir()
+  }
+
+  const streakAtual = registrado ? stats.streak : stats.streak
+  const totalTreinos = stats.totalTreinos + (registrado ? 0 : 1)
+
+  return (
+    <div className="flex flex-col items-center gap-5 px-5 pt-8 pb-32 max-w-lg mx-auto">
+      {/* Celebração visual */}
+      <div className="relative">
+        <div className="w-28 h-28 rounded-full bg-gradient-to-br from-[#9B7AD6] to-[#6B4EA8] flex items-center justify-center shadow-lg">
+          <Trophy size={48} className="text-white" />
+        </div>
+        <div className="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-[#F5C842] flex items-center justify-center shadow-md text-lg">
+          🎉
+        </div>
+      </div>
+
+      <h2 className="font-titulo text-2xl text-[#3D2B6B] text-center">
+        {nome ? `Parabéns, ${nome}!` : 'Parabéns!'}
+      </h2>
+
+      <p className="text-[#7B6B9A] text-base text-center leading-relaxed">
+        Você completou o <strong className="text-[#6B4EA8]">{treino.nome}</strong> 🌸
+      </p>
+
+      {/* Stats do treino */}
+      <div className="w-full grid grid-cols-3 gap-3">
+        <div className="bg-white rounded-2xl p-3 border border-[#D8CCF0] text-center shadow-sm">
+          <Timer size={18} className="text-[#9B7AD6] mx-auto mb-1" />
+          <p className="font-bold text-[#3D2B6B] text-lg">{treino.duracao}</p>
+          <p className="text-[#9B8BBB] text-[10px] font-semibold uppercase">Duração</p>
+        </div>
+        <div className="bg-white rounded-2xl p-3 border border-[#D8CCF0] text-center shadow-sm">
+          <Star size={18} className="text-[#F5C842] mx-auto mb-1" />
+          <p className="font-bold text-[#3D2B6B] text-lg">{treino.etapas.length}</p>
+          <p className="text-[#9B8BBB] text-[10px] font-semibold uppercase">Etapas</p>
+        </div>
+        <div className="bg-white rounded-2xl p-3 border border-[#D8CCF0] text-center shadow-sm">
+          <Calendar size={18} className="text-[#5BB88A] mx-auto mb-1" />
+          <p className="font-bold text-[#3D2B6B] text-lg">{totalTreinos}</p>
+          <p className="text-[#9B8BBB] text-[10px] font-semibold uppercase">Total</p>
+        </div>
+      </div>
+
+      {/* Streak */}
+      {(streakAtual > 0 || stats.totalTreinos > 0) && (
+        <div className="w-full bg-gradient-to-r from-[#FF8C42] to-[#F5C842] rounded-2xl p-4 flex items-center gap-4 shadow-md">
+          <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+            <Flame size={24} className="text-white" />
+          </div>
+          <div className="flex-1">
+            <p className="text-white font-bold text-lg">
+              {streakAtual > 0
+                ? `${streakAtual} dia${streakAtual > 1 ? 's' : ''} seguido${streakAtual > 1 ? 's' : ''}!`
+                : 'Comece sua sequência!'}
+            </p>
+            <p className="text-white/80 text-sm">
+              {streakAtual > 0
+                ? 'Continue treinando amanhã para manter'
+                : 'Treine amanhã para iniciar sua sequência'}
+            </p>
+          </div>
+          <span className="text-3xl">🔥</span>
+        </div>
+      )}
+
+      {/* Frase motivacional */}
+      <div className="w-full bg-[#EDE7F9] rounded-2xl p-4 text-center">
+        <p className="text-[#6B4EA8] text-sm leading-relaxed italic">"{frase}"</p>
+      </div>
+
+      {/* Botões */}
+      <button
+        onClick={registrar}
+        className="w-full py-4 bg-gradient-to-r from-[#9B7AD6] to-[#6B4EA8] text-white rounded-2xl font-semibold text-lg shadow-lg active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+      >
+        <Trophy size={20} />
+        Registrar conclusão
+      </button>
+      <button onClick={onVoltar} className="text-[#7B6B9A] underline text-sm">
+        Voltar aos exercícios
+      </button>
+    </div>
   )
 }
 
@@ -321,26 +429,12 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
   const pctTimer = iniciado ? ((etapa.segundos - segundosRestantes) / etapa.segundos) * 100 : 0
 
   if (concluido) {
-    const nome = primeiroNome(getNomeSalvo())
     return (
-      <div className="flex flex-col items-center justify-center gap-6 px-6 py-12 text-center">
-        <div className="text-6xl">🎉</div>
-        <h2 className="font-titulo text-2xl text-[#3D2B6B]">
-          {nome ? `Parabéns, ${nome}!` : 'Parabéns!'}
-        </h2>
-        <p className="text-[#7B6B9A] text-base">
-          Você completou o <strong>{treino.nome}</strong>. Seu corpo agradece o cuidado de hoje! 🌸
-        </p>
-        <button
-          onClick={onConcluir}
-          className="w-full py-4 bg-[#9B7AD6] text-white rounded-2xl font-semibold text-lg"
-        >
-          Registrar conclusão ✓
-        </button>
-        <button onClick={onVoltar} className="text-[#7B6B9A] underline text-sm">
-          Voltar aos exercícios
-        </button>
-      </div>
+      <TelaConclusao
+        treino={treino}
+        onConcluir={onConcluir}
+        onVoltar={onVoltar}
+      />
     )
   }
 
