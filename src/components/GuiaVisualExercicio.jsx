@@ -1,4 +1,7 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import AvatarCartoon, { escolherVariacao } from './AvatarCartoon'
+
+// ── Padrões de exercício (inalterados) ───────────────────────────────────────
 
 const PADROES = {
   respiracao: [
@@ -47,7 +50,7 @@ function detectarPadrao(nomeEtapa) {
 
 function nivelNoTempo(ciclo, tempo) {
   const durCiclo = ciclo.reduce((s, f) => s + f.duracao, 0)
-  if (durCiclo === 0) return { fase: '', nivel: 0 }
+  if (durCiclo === 0) return { fase: '', nivel: 0, tempoNaFase: 0 }
 
   const pos = ((tempo % durCiclo) + durCiclo) % durCiclo
   let acum = 0
@@ -63,11 +66,12 @@ function nivelNoTempo(ciclo, tempo) {
       return {
         fase: f.fase,
         nivel: ant.nivel + (f.nivel - ant.nivel) * eased,
+        tempoNaFase: tNaFase,
       }
     }
     acum += f.duracao
   }
-  return { fase: ciclo[0].fase, nivel: ciclo[0].nivel }
+  return { fase: ciclo[0].fase, nivel: ciclo[0].nivel, tempoNaFase: 0 }
 }
 
 function gerarCaminhoOnda(ciclo, duracaoTotal, w, h) {
@@ -82,100 +86,92 @@ function gerarCaminhoOnda(ciclo, duracaoTotal, w, h) {
   return d.trim()
 }
 
-// ── Avatar da instrutora com mãos animadas ──────────────────────────────────
-function AvatarInstrutora({ nivel }) {
-  const yMao = nivel * 22
-  const xIn = nivel * 8
+// ── Áudio guia via Web Speech API ────────────────────────────────────────────
 
-  return (
-    <svg viewBox="0 0 100 140" className="shrink-0" style={{ width: 88, height: 123 }}>
-      {/* Cabelo traseiro */}
-      <path
-        d="M26,36 C26,10 74,10 74,36 C79,55 77,72 74,82 L26,82 C23,72 21,55 26,36Z"
-        fill="#2D1B4E"
-      />
+const NOMES_FEMININOS =
+  /female|feminin|\bmaria\b|luciana|francisca|fernanda|joana|catarina|helena|c[íi]ntia|ines|in[eê]s|vit[oó]ria|google portugu[eê]s|paulina|isabela|let[íi]cia|ana\b/i
+const NOMES_MASCULINOS =
+  /\bmale\b|masculin|daniel|jo[aã]o|ricardo|felipe|paulo|ant[oó]nio|antonio|carlos|eduardo|heitor|felix/i
 
-      {/* Pescoço */}
-      <rect x="42" y="78" width="16" height="12" rx="5" fill="#C68B59" />
-
-      {/* Corpo / blusa */}
-      <path
-        d="M20,104 C27,88 42,87 50,87 C58,87 73,88 80,104 L84,140 L16,140Z"
-        fill="#9B7AD6"
-      />
-      <path d="M42,87 Q50,97 58,87" fill="#EDE7F9" />
-
-      {/* Braço esquerdo + mão */}
-      <g
-        style={{
-          transform: `translate(${xIn}px, ${-yMao}px)`,
-          transition: 'transform 180ms ease-out',
-        }}
-      >
-        <line x1="20" y1="104" x2="4" y2="128" stroke="#C68B59" strokeWidth="6" strokeLinecap="round" />
-        <circle cx="2" cy="130" r="5.5" fill="#C68B59" />
-        <line x1="-2" y1="127" x2="-4" y2="122" stroke="#C68B59" strokeWidth="2" strokeLinecap="round" />
-        <line x1="0" y1="126" x2="-1" y2="121" stroke="#C68B59" strokeWidth="2" strokeLinecap="round" />
-        <line x1="3" y1="125" x2="3" y2="120" stroke="#C68B59" strokeWidth="2" strokeLinecap="round" />
-        <line x1="5" y1="126" x2="6" y2="121" stroke="#C68B59" strokeWidth="2" strokeLinecap="round" />
-      </g>
-
-      {/* Braço direito + mão */}
-      <g
-        style={{
-          transform: `translate(${-xIn}px, ${-yMao}px)`,
-          transition: 'transform 180ms ease-out',
-        }}
-      >
-        <line x1="80" y1="104" x2="96" y2="128" stroke="#C68B59" strokeWidth="6" strokeLinecap="round" />
-        <circle cx="98" cy="130" r="5.5" fill="#C68B59" />
-        <line x1="94" y1="126" x2="93" y2="121" stroke="#C68B59" strokeWidth="2" strokeLinecap="round" />
-        <line x1="96" y1="125" x2="96" y2="120" stroke="#C68B59" strokeWidth="2" strokeLinecap="round" />
-        <line x1="99" y1="126" x2="100" y2="121" stroke="#C68B59" strokeWidth="2" strokeLinecap="round" />
-        <line x1="101" y1="127" x2="103" y2="122" stroke="#C68B59" strokeWidth="2" strokeLinecap="round" />
-      </g>
-
-      {/* Rosto */}
-      <ellipse cx="50" cy="54" rx="22" ry="27" fill="#C68B59" />
-
-      {/* Cabelo frente */}
-      <path d="M28,40 C30,22 48,14 52,20 C44,26 36,36 34,46Z" fill="#2D1B4E" />
-      <path d="M72,40 C70,22 52,14 48,20 C56,26 64,36 66,46Z" fill="#2D1B4E" opacity="0.6" />
-
-      {/* Olhos */}
-      <ellipse cx="40" cy="49" rx="2.8" ry="3.2" fill="#2D1B4E" />
-      <ellipse cx="60" cy="49" rx="2.8" ry="3.2" fill="#2D1B4E" />
-      <circle cx="41.5" cy="48" r="1" fill="white" />
-      <circle cx="61.5" cy="48" r="1" fill="white" />
-
-      {/* Sobrancelhas */}
-      <path d="M35,43 Q40,40 45,43" fill="none" stroke="#2D1B4E" strokeWidth="1.3" strokeLinecap="round" />
-      <path d="M55,43 Q60,40 65,43" fill="none" stroke="#2D1B4E" strokeWidth="1.3" strokeLinecap="round" />
-
-      {/* Nariz */}
-      <path d="M50,52 Q48,58 50,60" fill="none" stroke="#A87048" strokeWidth="0.8" />
-
-      {/* Sorriso — muda com o nível */}
-      <path
-        d={`M42,${66 - nivel * 1.5} Q50,${73 - nivel * 3} 58,${66 - nivel * 1.5}`}
-        fill="none"
-        stroke="#B87060"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        style={{ transition: 'd 200ms' }}
-      />
-
-      {/* Bochechas */}
-      <circle cx="34" cy="60" r="4.5" fill="#E8907A" opacity="0.18" />
-      <circle cx="66" cy="60" r="4.5" fill="#E8907A" opacity="0.18" />
-    </svg>
-  )
+let _vozesCache = []
+function _atualizarVozes() {
+  const v = window.speechSynthesis?.getVoices()
+  if (v && v.length) _vozesCache = v
 }
+if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+  _atualizarVozes()
+  window.speechSynthesis.addEventListener?.('voiceschanged', _atualizarVozes)
+}
+
+function _vozFeminina() {
+  if (!('speechSynthesis' in window)) return null
+  const vozes = _vozesCache.length ? _vozesCache : window.speechSynthesis.getVoices() || []
+  const pt = vozes.filter((v) => v.lang && v.lang.toLowerCase().startsWith('pt'))
+  const ehFem = (v) => NOMES_FEMININOS.test(v.name)
+  const ehMasc = (v) => NOMES_MASCULINOS.test(v.name)
+  const ptBR = pt.filter((v) => v.lang.toLowerCase().includes('br'))
+  return ptBR.find(ehFem) || pt.find(ehFem)
+    || vozes.find(ehFem) || ptBR.find((v) => !ehMasc(v))
+    || pt.find((v) => !ehMasc(v)) || null
+}
+
+const NUMEROS = ['', 'um', 'dois', 'três', 'quatro', 'cinco']
+
+function useAudioGuia(fase, tempoNaFase, ativo, audioAtivo) {
+  const faseAnterior = useRef('')
+  const segundoAnterior = useRef(-1)
+
+  const falar = useCallback((texto, rate = 1.1) => {
+    if (!audioAtivo || !('speechSynthesis' in window)) return
+    window.speechSynthesis.cancel()
+    const u = new SpeechSynthesisUtterance(texto)
+    u.rate = rate
+    u.pitch = 1.15
+    u.volume = 0.9
+    const voz = _vozFeminina()
+    if (voz) { u.voice = voz; u.lang = voz.lang }
+    window.speechSynthesis.speak(u)
+  }, [audioAtivo])
+
+  useEffect(() => {
+    if (!ativo || !audioAtivo) return
+
+    const ehContrair = /contrai|aperta|andar|segur/i.test(fase)
+    const ehRelaxar = /relaxa|solta|expir|descend|descanso/i.test(fase)
+    const ehRespirar = /inspir|respir|preparo/i.test(fase)
+
+    if (fase !== faseAnterior.current) {
+      faseAnterior.current = fase
+      segundoAnterior.current = -1
+
+      if (ehContrair) falar('Aperta')
+      else if (ehRelaxar) falar('Solta')
+      else if (ehRespirar) falar('Inspire')
+    }
+
+    const segAtual = Math.floor(tempoNaFase)
+    if (segAtual !== segundoAnterior.current && segAtual > 0) {
+      segundoAnterior.current = segAtual
+      const num = ((segAtual - 1) % 5) + 1
+      if (num <= 5 && (ehContrair || ehRelaxar)) {
+        falar(NUMEROS[num], 1.3)
+      }
+    }
+  }, [fase, tempoNaFase, ativo, audioAtivo, falar])
+
+  useEffect(() => {
+    return () => { window.speechSynthesis?.cancel() }
+  }, [])
+}
+
+// ── Componente principal ─────────────────────────────────────────────────────
 
 export default function GuiaVisualExercicio({ nomeEtapa, segundosRestantes, duracaoTotal, ativo }) {
   const svgId = useMemo(() => `gve${Math.random().toString(36).slice(2, 8)}`, [])
   const tipo = useMemo(() => detectarPadrao(nomeEtapa), [nomeEtapa])
   const ciclo = PADROES[tipo]
+  const [variacao] = useState(() => escolherVariacao())
+  const [audioAtivo, setAudioAtivo] = useState(false)
 
   const tempoDecorrido = duracaoTotal - segundosRestantes
   const [tempoSmooth, setTempoSmooth] = useState(tempoDecorrido)
@@ -192,10 +188,22 @@ export default function GuiaVisualExercicio({ nomeEtapa, segundosRestantes, dura
     return () => clearInterval(interval)
   }, [ativo, tempoDecorrido])
 
-  const { fase, nivel } = useMemo(
+  const { fase, nivel, tempoNaFase } = useMemo(
     () => nivelNoTempo(ciclo, tempoSmooth),
     [ciclo, tempoSmooth],
   )
+
+  // Contagem de dedos: cicla 1-5 a cada 5 segundos durante contração e relaxamento
+  const ehAperta = nivel > 0.2
+  const ehFaseAtiva = /contrai|aperta|andar|segur|relaxa|solta|expir|descend/i.test(fase)
+  const dedos = ehFaseAtiva
+    ? Math.min(Math.floor(tempoNaFase % 5) + 1, 5)
+    : 5 // respiração: mão aberta
+
+  // Áudio guia
+  useAudioGuia(fase, tempoNaFase, ativo, audioAtivo)
+
+  // ── Gráfico de onda (inalterado) ──────────────────────────────────────────
 
   const W = 300
   const H = 55
@@ -209,7 +217,6 @@ export default function GuiaVisualExercicio({ nomeEtapa, segundosRestantes, dura
     ? `M 0,${H} ${caminhoOnda.replace(/^M/, 'L')} L${W},${H} Z`
     : ''
 
-  const ehAperta = nivel > 0.2
   const ALT_BOLA_AREA = 150
   const RAIO_BOLA = 28
   const bolaY = ALT_BOLA_AREA - RAIO_BOLA - nivel * (ALT_BOLA_AREA - RAIO_BOLA * 2)
@@ -218,8 +225,8 @@ export default function GuiaVisualExercicio({ nomeEtapa, segundosRestantes, dura
 
   return (
     <div className="bg-white rounded-2xl p-4 shadow-sm border border-[#D8CCF0] w-full">
-      {/* Label principal */}
-      <div className="text-center mb-2">
+      {/* Label principal + botão de som */}
+      <div className="flex items-center justify-center gap-2 mb-2">
         <span
           className="inline-flex items-center gap-2 px-5 py-2 rounded-full font-bold text-base transition-all duration-300"
           style={{
@@ -230,22 +237,41 @@ export default function GuiaVisualExercicio({ nomeEtapa, segundosRestantes, dura
           {ehAperta ? '↑' : '↓'}
           <span className="text-lg">{ehAperta ? 'Aperta' : 'Solta'}</span>
         </span>
+
+        <button
+          onClick={() => setAudioAtivo((a) => !a)}
+          className="w-9 h-9 rounded-full flex items-center justify-center border transition-colors"
+          style={{
+            backgroundColor: audioAtivo ? '#EDE7F9' : 'white',
+            borderColor: '#D8CCF0',
+          }}
+          aria-label={audioAtivo ? 'Desligar áudio guia' : 'Ligar áudio guia'}
+        >
+          <span className="text-base">{audioAtivo ? '🔊' : '🔇'}</span>
+        </button>
       </div>
 
-      {/* Fase específica */}
-      <p
-        className="text-center text-xs font-semibold mb-3 transition-colors duration-300"
-        style={{ color: ehAperta ? '#9B7AD6' : '#7B6B9A' }}
-      >
-        {fase}
-      </p>
+      {/* Fase específica + contagem */}
+      <div className="text-center mb-3">
+        <p
+          className="text-xs font-semibold transition-colors duration-300"
+          style={{ color: ehAperta ? '#9B7AD6' : '#7B6B9A' }}
+        >
+          {fase}
+          {ehFaseAtiva && (
+            <span className="ml-2 text-sm font-bold" style={{ color: ehAperta ? '#6B4EA8' : '#3A9B6E' }}>
+              {dedos}
+            </span>
+          )}
+        </p>
+      </div>
 
       {/* Avatar + Bolinha lado a lado */}
       <div className="flex items-center justify-center gap-3 mb-3">
-        {/* Avatar */}
-        <AvatarInstrutora nivel={nivel} />
+        {/* Avatar cartoon */}
+        <AvatarCartoon nivel={nivel} dedos={dedos} variacao={variacao} />
 
-        {/* Área da bolinha */}
+        {/* Área da bolinha (inalterada) */}
         <div className="flex flex-col items-center">
           <span
             className="text-[11px] font-bold mb-1 transition-colors duration-300"
@@ -270,24 +296,20 @@ export default function GuiaVisualExercicio({ nomeEtapa, segundosRestantes, dura
               </radialGradient>
             </defs>
 
-            {/* Linha guia vertical */}
             <line x1="40" y1={RAIO_BOLA} x2="40" y2={ALT_BOLA_AREA - RAIO_BOLA} stroke="#D8CCF0" strokeWidth="1" strokeDasharray="3,4" />
 
-            {/* Círculo-alvo pontilhado no topo */}
             <circle
               cx="40" cy={RAIO_BOLA}
               r={RAIO_BOLA - 1}
               fill="none" stroke="#D8CCF0" strokeWidth="1.5" strokeDasharray="4,3"
             />
 
-            {/* Círculo-alvo pontilhado na base */}
             <circle
               cx="40" cy={ALT_BOLA_AREA - RAIO_BOLA}
               r={RAIO_BOLA - 1}
               fill="none" stroke="#D8CCF0" strokeWidth="1.5" strokeDasharray="4,3"
             />
 
-            {/* Marcas intermediárias */}
             {[0.25, 0.5, 0.75].map((p) => (
               <line
                 key={p}
@@ -297,12 +319,10 @@ export default function GuiaVisualExercicio({ nomeEtapa, segundosRestantes, dura
               />
             ))}
 
-            {/* Brilho de fundo */}
             <circle cx="40" cy={bolaY} r={RAIO_BOLA + 12} fill={`url(#${svgId}-bg)`}>
               <animate attributeName="r" values={`${RAIO_BOLA + 10};${RAIO_BOLA + 16};${RAIO_BOLA + 10}`} dur="2s" repeatCount="indefinite" />
             </circle>
 
-            {/* Bolinha principal */}
             <circle
               cx="40" cy={bolaY}
               r={RAIO_BOLA}
@@ -310,7 +330,6 @@ export default function GuiaVisualExercicio({ nomeEtapa, segundosRestantes, dura
               style={{ transition: 'cy 150ms ease-out' }}
             />
 
-            {/* Reflexo de luz */}
             <ellipse
               cx="34" cy={bolaY - 8}
               rx="6" ry="4"
@@ -318,7 +337,6 @@ export default function GuiaVisualExercicio({ nomeEtapa, segundosRestantes, dura
               style={{ transition: 'cy 150ms ease-out' }}
             />
 
-            {/* Seta dentro da bola */}
             <text
               x="40" y={bolaY + 5}
               textAnchor="middle" fill="white" fontSize="16" fontWeight="bold" opacity="0.8"
@@ -337,7 +355,7 @@ export default function GuiaVisualExercicio({ nomeEtapa, segundosRestantes, dura
         </div>
       </div>
 
-      {/* Gráfico de onda — Cronograma */}
+      {/* Gráfico de onda — Cronograma (inalterado) */}
       <div className="mt-1">
         <p className="text-[10px] text-[#7B6B9A] mb-1.5 text-center font-semibold uppercase tracking-widest">
           Cronograma do exercício
@@ -363,12 +381,10 @@ export default function GuiaVisualExercicio({ nomeEtapa, segundosRestantes, dura
             </clipPath>
           </defs>
 
-          {/* Grid */}
           <line x1="0" y1={H} x2={W} y2={H} stroke="#EDE7F9" strokeWidth="1" />
           <line x1="0" y1={H * 0.5} x2={W} y2={H * 0.5} stroke="#EDE7F9" strokeWidth="0.5" strokeDasharray="3,4" />
           <line x1="0" y1="4" x2={W} y2="4" stroke="#EDE7F9" strokeWidth="0.5" strokeDasharray="3,4" />
 
-          {/* Marcadores de tempo */}
           {Array.from({ length: Math.floor(duracaoTotal / intervaloSegs) + 1 }, (_, i) => {
             const t = i * intervaloSegs
             if (t > duracaoTotal) return null
@@ -383,16 +399,10 @@ export default function GuiaVisualExercicio({ nomeEtapa, segundosRestantes, dura
             )
           })}
 
-          {/* Onda completa — clara */}
           <path d={caminhoOnda} fill="none" stroke="#D8CCF0" strokeWidth="1.5" />
-
-          {/* Preenchimento concluído */}
           <path d={caminhoFill} fill={`url(#${svgId}-wg)`} clipPath={`url(#${svgId}-cp)`} />
-
-          {/* Onda concluída — destaque com gradiente */}
           <path d={caminhoOnda} fill="none" stroke={`url(#${svgId}-wl)`} strokeWidth="2.5" clipPath={`url(#${svgId}-cp)`} />
 
-          {/* Indicador de progresso */}
           <line x1={xProg} y1="0" x2={xProg} y2={H} stroke="#6B4EA8" strokeWidth="1.5" strokeDasharray="2,2" opacity="0.6" />
           <circle
             cx={xProg}
