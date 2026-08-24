@@ -164,14 +164,71 @@ function useAudioGuia(fase, tempoNaFase, ativo, audioAtivo) {
   }, [])
 }
 
+// ── Instrução dinâmica que lê os segundos do gráfico ─────────────────────────
+
+function _formatarSegs(s) {
+  if (s === 0.5) return 'meio segundo'
+  if (s === 1) return '1 segundo'
+  if (s === 1.5) return 'um segundo e meio'
+  if (s === 2.5) return 'dois segundos e meio'
+  if (s % 1 !== 0) return `${s} segundos`
+  return `${s} segundos`
+}
+
+export function gerarInstrucaoDinamica(nomeEtapa) {
+  const tipo = detectarPadrao(nomeEtapa)
+  const ciclo = PADROES[tipo]
+
+  if (tipo === 'elevador') {
+    const andares = ciclo.filter((f) => /andar/i.test(f.fase))
+    const segurar = ciclo.find((f) => /segur/i.test(f.fase))
+    const relaxar = ciclo.find((f) => /relaxar/i.test(f.fase))
+    return (
+      `Agora é o exercício elevador. ` +
+      `Você vai subir ${andares.length} andares, apertando um pouco mais a cada andar, ${_formatarSegs(andares[0]?.duracao || 2.5)} cada. ` +
+      (segurar ? `Depois segure no topo por ${_formatarSegs(segurar.duracao)}. ` : '') +
+      `Desça devagar, relaxando aos poucos. ` +
+      (relaxar ? `Termine com ${_formatarSegs(relaxar.duracao)} de relaxamento total.` : '')
+    )
+  }
+
+  if (tipo === 'respiracao' || tipo === 'relaxamento') {
+    const fases = ciclo.map((f) => `${f.fase.toLowerCase()} por ${_formatarSegs(f.duracao)}`).join(' e ')
+    const intro = tipo === 'respiracao'
+      ? 'Esta é a fase de respiração e preparo.'
+      : 'Esta é a fase de relaxamento final.'
+    return `${intro} ${fases.charAt(0).toUpperCase() + fases.slice(1)}. Relaxe os ombros e o abdômen. Acompanhe a bolinha.`
+  }
+
+  // suave, rapida, longa
+  const contrair = ciclo.find((f) => /contrai/i.test(f.fase))
+  const relaxar = ciclo.find((f) => /relaxa/i.test(f.fase))
+  const tContrair = contrair?.duracao || 5
+  const tRelaxar = relaxar?.duracao || 5
+
+  if (tipo === 'rapida') {
+    return (
+      `Agora são contrações rápidas. ` +
+      `Você tem ${_formatarSegs(tContrair)} para apertar e ${_formatarSegs(tRelaxar)} para soltar. ` +
+      `Siga a bolinha no ritmo.`
+    )
+  }
+
+  return (
+    `Aqui abaixo está o exercício de apertar e soltar. ` +
+    `Você tem ${_formatarSegs(tContrair)} para apertar e segurar, e ${_formatarSegs(tRelaxar)} para soltar. ` +
+    `É só seguir a bolinha: quando ela sobe, você aperta; quando ela desce, você solta. ` +
+    `Acompanhe pelo gráfico.`
+  )
+}
+
 // ── Componente principal ─────────────────────────────────────────────────────
 
-export default function GuiaVisualExercicio({ nomeEtapa, segundosRestantes, duracaoTotal, ativo }) {
+export default function GuiaVisualExercicio({ nomeEtapa, segundosRestantes, duracaoTotal, ativo, audioAtivo, onToggleAudio }) {
   const svgId = useMemo(() => `gve${Math.random().toString(36).slice(2, 8)}`, [])
   const tipo = useMemo(() => detectarPadrao(nomeEtapa), [nomeEtapa])
   const ciclo = PADROES[tipo]
   const [variacao] = useState(() => escolherVariacao())
-  const [audioAtivo, setAudioAtivo] = useState(false)
 
   const tempoDecorrido = duracaoTotal - segundosRestantes
   const [tempoSmooth, setTempoSmooth] = useState(tempoDecorrido)
@@ -238,17 +295,19 @@ export default function GuiaVisualExercicio({ nomeEtapa, segundosRestantes, dura
           <span className="text-lg">{ehAperta ? 'Aperta' : 'Solta'}</span>
         </span>
 
-        <button
-          onClick={() => setAudioAtivo((a) => !a)}
-          className="w-9 h-9 rounded-full flex items-center justify-center border transition-colors"
-          style={{
-            backgroundColor: audioAtivo ? '#EDE7F9' : 'white',
-            borderColor: '#D8CCF0',
-          }}
-          aria-label={audioAtivo ? 'Desligar áudio guia' : 'Ligar áudio guia'}
-        >
-          <span className="text-base">{audioAtivo ? '🔊' : '🔇'}</span>
-        </button>
+        {onToggleAudio && (
+          <button
+            onClick={onToggleAudio}
+            className="w-9 h-9 rounded-full flex items-center justify-center border transition-colors"
+            style={{
+              backgroundColor: audioAtivo ? '#EDE7F9' : 'white',
+              borderColor: '#D8CCF0',
+            }}
+            aria-label={audioAtivo ? 'Desligar áudio guia' : 'Ligar áudio guia'}
+          >
+            <span className="text-base">{audioAtivo ? '🔊' : '🔇'}</span>
+          </button>
+        )}
       </div>
 
       {/* Fase específica + contagem */}

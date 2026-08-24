@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { ArrowLeft, Play, Pause, SkipForward, Info, Timer, RotateCcw, Lock, Flame, Trophy, Star, Calendar } from 'lucide-react'
-import GuiaVisualExercicio from '../components/GuiaVisualExercicio'
+import GuiaVisualExercicio, { gerarInstrucaoDinamica } from '../components/GuiaVisualExercicio'
 import { treinos, avisoExercicios, comoContrair } from '../data/exercicios'
 import {
   gruposInvisiveis,
@@ -379,11 +379,34 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
   const [iniciado, setIniciado] = useState(false)
   const [pausado, setPausado] = useState(false)
   const [concluido, setConcluido] = useState(false)
+  const [audioAtivo, setAudioAtivo] = useState(false)
+  const instrucaoTocadaRef = useRef(-1)
   const { config } = useConfiguracoes()
   const intervalRef = useRef(null)
 
   const etapa = treino.etapas[etapaIdx]
   const totalEtapas = treino.etapas.length
+  const instrucaoDinamica = gerarInstrucaoDinamica(etapa.nome)
+
+  // Auto-play instrução ao entrar numa nova etapa (se áudio ligado e já iniciado)
+  useEffect(() => {
+    if (!audioAtivo || !iniciado || pausado || concluido) return
+    if (instrucaoTocadaRef.current === etapaIdx) return
+    instrucaoTocadaRef.current = etapaIdx
+
+    if (!('speechSynthesis' in window)) return
+    const timer = setTimeout(() => {
+      const u = new SpeechSynthesisUtterance(instrucaoDinamica)
+      u.lang = 'pt-BR'
+      u.rate = 0.95
+      u.pitch = 1.05
+      u.volume = 1
+      const voz = escolherVozFeminina()
+      if (voz) { u.voice = voz; u.lang = voz.lang }
+      window.speechSynthesis.speak(u)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [etapaIdx, audioAtivo, iniciado, pausado, concluido, instrucaoDinamica])
 
   function comecar() {
     setIniciado(true)
@@ -510,13 +533,15 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
           segundosRestantes={segundosRestantes}
           duracaoTotal={etapa.segundos}
           ativo={iniciado && !pausado && !concluido}
+          audioAtivo={audioAtivo}
+          onToggleAudio={() => setAudioAtivo((a) => !a)}
         />
 
         {/* Instrução da etapa + botão de narração */}
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#D8CCF0] w-full text-center">
           <h3 className="font-titulo text-lg text-[#9B7AD6] mb-2">{etapa.nome}</h3>
           <p className="text-[#3D2B6B] text-base leading-relaxed">{etapa.instrucao}</p>
-          <BotaoNarracao key={etapaIdx} texto={etapa.narracao} />
+          <BotaoNarracao key={etapaIdx} texto={instrucaoDinamica} />
         </div>
 
         {/* Botão Começar — aparece só antes de iniciar */}
