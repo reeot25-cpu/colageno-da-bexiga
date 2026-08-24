@@ -136,9 +136,8 @@ function useAudioGuia(fase, tempoNaFase, ativo, audioAtivo) {
   useEffect(() => {
     if (!ativo || !audioAtivo) return
 
-    const ehContrair = /contrai|aperta|andar|segur/i.test(fase)
-    const ehRelaxar = /relaxa|solta|expir|descend|descanso/i.test(fase)
-    const ehRespirar = /inspir|respir|preparo/i.test(fase)
+    const ehContrair = /contrai|aperta|andar|segur|inspir/i.test(fase)
+    const ehRelaxar = /relaxa|solta|expir|descend|descanso|respir/i.test(fase)
 
     if (fase !== faseAnterior.current) {
       faseAnterior.current = fase
@@ -146,7 +145,6 @@ function useAudioGuia(fase, tempoNaFase, ativo, audioAtivo) {
 
       if (ehContrair) falar('Aperta')
       else if (ehRelaxar) falar('Solta')
-      else if (ehRespirar) falar('Inspire')
     }
 
     const segAtual = Math.floor(tempoNaFase)
@@ -192,12 +190,24 @@ export function gerarInstrucaoDinamica(nomeEtapa) {
     )
   }
 
-  if (tipo === 'respiracao' || tipo === 'relaxamento') {
-    const fases = ciclo.map((f) => `${f.fase.toLowerCase()} por ${_formatarSegs(f.duracao)}`).join(' e ')
-    const intro = tipo === 'respiracao'
-      ? 'Esta é a fase de respiração e preparo.'
-      : 'Esta é a fase de relaxamento final.'
-    return `${intro} ${fases.charAt(0).toUpperCase() + fases.slice(1)}. Relaxe os ombros e o abdômen. Acompanhe a bolinha.`
+  if (tipo === 'respiracao') {
+    const apertar = ciclo.find((f) => /inspir/i.test(f.fase))
+    const soltar = ciclo.find((f) => /expir/i.test(f.fase))
+    return (
+      `Esta é a fase de preparo. ` +
+      `Você tem ${_formatarSegs(apertar?.duracao || 4)} para apertar suavemente, e ${_formatarSegs(soltar?.duracao || 6)} para soltar. ` +
+      `Relaxe os ombros e o abdômen. Acompanhe a bolinha.`
+    )
+  }
+
+  if (tipo === 'relaxamento') {
+    const relaxar = ciclo.find((f) => /relaxar/i.test(f.fase))
+    const respirar = ciclo.find((f) => /respirar/i.test(f.fase))
+    return (
+      `Esta é a fase de relaxamento final. ` +
+      `Solte toda a tensão por ${_formatarSegs(relaxar?.duracao || 6)} e respire calmamente por ${_formatarSegs(respirar?.duracao || 4)}. ` +
+      `Deixe o corpo descansar.`
+    )
   }
 
   // suave, rapida, longa
@@ -251,8 +261,8 @@ export default function GuiaVisualExercicio({ nomeEtapa, segundosRestantes, dura
   )
 
   // Contagem de dedos: cicla 1-5 a cada 5 segundos durante contração e relaxamento
-  const ehAperta = nivel > 0.2
-  const ehFaseAtiva = /contrai|aperta|andar|segur|relaxa|solta|expir|descend/i.test(fase)
+  const ehAperta = nivel >= 0.2
+  const ehFaseAtiva = /contrai|aperta|andar|segur|relaxa|solta|expir|descend|inspir|respir/i.test(fase)
   const dedos = ehFaseAtiva
     ? Math.min(Math.floor(tempoNaFase % 5) + 1, 5)
     : 5 // respiração: mão aberta
@@ -316,7 +326,7 @@ export default function GuiaVisualExercicio({ nomeEtapa, segundosRestantes, dura
           className="text-xs font-semibold transition-colors duration-300"
           style={{ color: ehAperta ? '#9B7AD6' : '#7B6B9A' }}
         >
-          {fase}
+          {fase.replace(/Inspirar/i, 'Aperta').replace(/Expirar/i, 'Solta')}
           {ehFaseAtiva && (
             <span className="ml-2 text-sm font-bold" style={{ color: ehAperta ? '#6B4EA8' : '#3A9B6E' }}>
               {dedos}
