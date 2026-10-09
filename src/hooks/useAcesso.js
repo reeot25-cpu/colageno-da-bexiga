@@ -21,10 +21,12 @@ export function getInicioAcesso() {
 const CHAVE_DONA = 'collagenflow_dona'
 
 // A senha vem do arquivo .env.local (VITE_SENHA_DONA), que não vai para o GitHub.
-// Sem senha configurada, o ?dona=... não ativa nada.
+// Sem senha configurada (vazia, só espaços ou inexistente), o ?dona=... fica
+// DESLIGADO — nunca libera com senha vazia.
 // ⚠️ Atenção: no app publicado a senha fica dentro do JavaScript, então é uma
 // trava simples, não uma proteção forte.
-const SENHA_DONA = import.meta.env.VITE_SENHA_DONA
+const SENHA_DONA = String(import.meta.env.VITE_SENHA_DONA ?? '').trim()
+const DONA_POR_URL_ATIVO = SENHA_DONA.length > 0
 
 export function ehDona() {
   if (import.meta.env.DEV) return true
@@ -43,7 +45,7 @@ export function processarParametroDona() {
     const valor = url.searchParams.get('dona')
     if (valor === null) return
     if (valor === 'sair') localStorage.removeItem(CHAVE_DONA)
-    else if (SENHA_DONA && valor === SENHA_DONA) localStorage.setItem(CHAVE_DONA, '1')
+    else if (DONA_POR_URL_ATIVO && valor.trim() === SENHA_DONA) localStorage.setItem(CHAVE_DONA, '1')
     url.searchParams.delete('dona')
     window.history.replaceState(null, '', url.pathname + url.search + url.hash)
   } catch {
@@ -55,6 +57,6 @@ export function useAcesso() {
   // A data de início é fixa; recalcular o estado a cada render é barato.
   const [inicioMs] = useState(getInicioAcesso)
   const estado = verificarAcesso(inicioMs)
-  if (ehDona()) return { ...estado, expirado: false, dentroDoPrazo: true, LINK_ASSINATURA, DIAS_ACESSO }
-  return { ...estado, LINK_ASSINATURA, DIAS_ACESSO }
+  if (ehDona()) return { ...estado, expirado: false, dentroDoPrazo: true, dona: true, LINK_ASSINATURA, DIAS_ACESSO }
+  return { ...estado, dona: false, LINK_ASSINATURA, DIAS_ACESSO }
 }

@@ -77,8 +77,8 @@ export default function Inicio() {
         </span>
       </div>
 
-      {/* Aviso gentil nos últimos dias (18, 19, 20 e 21) */}
-      {acesso.faltam <= 3 && <AvisoFimAcesso faltam={acesso.faltam} />}
+      {/* Aviso gentil nos últimos dias (18, 19, 20 e 21) — escondido no modo dona */}
+      {!acesso.dona && acesso.faltam <= 3 && <AvisoFimAcesso faltam={acesso.faltam} />}
 
       {/* Card de boas-vindas dinâmico */}
       <CardBoasVindas mensagem={mensagem} />
