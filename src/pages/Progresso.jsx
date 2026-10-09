@@ -159,7 +159,7 @@ function SecaoMedalhas({ medalhas }) {
 // ── Prêmios (Pétalas) ─────────────────────────────────────────────────────────
 
 const COMO_GANHAR = [
-  ['Tarefa do ritual concluída', VALORES.tarefaRitual],
+  ['Tarefa do ritual feita no próprio dia', VALORES.tarefaRitual],
   ['Dia do ritual completo (bônus)', VALORES.diaRitualCompleto],
   [`Treino até o fim, segurando no Aperta (até ${VALORES.treinosMaxPorDia} por dia)`, VALORES.treino],
   ['Diário preenchido no dia', VALORES.diarioPreenchido],
@@ -455,6 +455,12 @@ export default function Progresso() {
                 {progExpandido.pct === 100 ? '🌟 Dia completo!' : `${Math.round(progExpandido.pct)}% concluído`}
               </p>
             </div>
+
+            {dia < diaDesbloqueado && (
+              <p className="px-5 pt-3 text-xs text-[#9B8BBB]">
+                Você pode marcar este dia, mas só as tarefas feitas no próprio dia rendem Pétalas 🌸
+              </p>
+            )}
 
             <ul>
               {tarefas.map((tarefa, i) => {

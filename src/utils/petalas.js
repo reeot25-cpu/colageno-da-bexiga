@@ -41,8 +41,10 @@ function lerJson(chave, padrao) {
 }
 
 export function lerRegistros() {
+  const progresso = lerJson('colageno_progresso', {}) ?? {}
   return {
-    concluidas: lerJson('colageno_progresso', {})?.concluidas ?? {},
+    concluidas: progresso.concluidas ?? {},
+    marcadasNoDia: progresso.marcadasNoDia ?? {},
     treinos: lerJson('collagenflow_historico_exercicios', []),
     diario: lerJson('collagenflow_diario', {}),
   }
@@ -73,9 +75,12 @@ const maior = (lista) => (lista.length ? Math.max(...lista) : 0)
 
 // ── Ganhos ───────────────────────────────────────────────────────────────────
 
-export function calcularGanhos({ concluidas, treinos, diario }) {
-  const tarefas = diasRitual.flatMap((d) => d.tarefas).filter((t) => concluidas[t.id]).length
-  const diasCompletos = diasRitual.filter((d) => d.tarefas.every((t) => concluidas[t.id])).length
+export function calcularGanhos({ concluidas, marcadasNoDia = {}, treinos, diario }) {
+  // Tarefa do ritual só pontua se marcada no próprio dia (marcar dias passados
+  // depois não vale). Sem registro de quando foi marcada = tarefa antiga, vale.
+  const conta = (t, dia) => concluidas[t.id] && (!(t.id in marcadasNoDia) || marcadasNoDia[t.id] === dia)
+  const tarefas = diasRitual.reduce((soma, d) => soma + d.tarefas.filter((t) => conta(t, d.dia)).length, 0)
+  const diasCompletos = diasRitual.filter((d) => d.tarefas.every((t) => conta(t, d.dia))).length
 
   // Só treinos válidos (ver utils/validacaoTreino.js) pontuam e contam para o bônus
   const treinosPorDia = {}

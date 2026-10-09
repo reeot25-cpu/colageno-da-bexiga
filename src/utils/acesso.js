@@ -23,6 +23,36 @@ export const DIAS_ACESSO = 21
 // TODO: substituir pelo link real da Kiwify quando você me enviar.
 export const LINK_ASSINATURA = 'https://kiwify.com.br/ASSINATURA-COLLAGENFLOW'
 
+// ─── 🎟️ DESCONTO NA ASSINATURA POR PÉTALAS ───────────────────────────────────
+// ÚNICO lugar com os cupons. TROCAR pelos códigos reais criados na Kiwify —
+// um cupom que não existe lá pode dar erro na compra.
+// A faixa usa o total de Pétalas GANHAS (não o saldo): gastar em prêmios não
+// reduz o desconto. Calibragem: faixa 3 ≈ 19 dos 21 dias de uso constante.
+export const FAIXAS_DESCONTO = [
+  { faixa: 1, desconto: 10, minimoPetalas: 500,  cupom: 'TROCAR-CUPOM-10' },
+  { faixa: 2, desconto: 20, minimoPetalas: 1000, cupom: 'TROCAR-CUPOM-20' },
+  { faixa: 3, desconto: 30, minimoPetalas: 1500, cupom: 'TROCAR-CUPOM-30' },
+]
+
+// { atual: faixa|null, proxima: faixa|null, faltam: Pétalas até a próxima }
+export function faixaDesconto(petalasGanhas) {
+  const atual = [...FAIXAS_DESCONTO].reverse().find((f) => petalasGanhas >= f.minimoPetalas) ?? null
+  const proxima = FAIXAS_DESCONTO.find((f) => petalasGanhas < f.minimoPetalas) ?? null
+  return { atual, proxima, faltam: proxima ? proxima.minimoPetalas - petalasGanhas : 0 }
+}
+
+// Link da assinatura com ?coupon= da faixa (sem faixa → link sem cupom).
+export function linkAssinatura(faixa) {
+  if (!faixa) return LINK_ASSINATURA
+  try {
+    const url = new URL(LINK_ASSINATURA)
+    url.searchParams.set('coupon', faixa.cupom)
+    return url.toString()
+  } catch {
+    return LINK_ASSINATURA
+  }
+}
+
 const DIA_MS = 1000 * 60 * 60 * 24
 
 // Decide se a usuária está dentro do prazo. Retorno:

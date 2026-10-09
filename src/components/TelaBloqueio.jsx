@@ -2,7 +2,8 @@ import { Sparkles, Heart, Lock } from 'lucide-react'
 import { useProgresso } from '../hooks/useProgresso'
 import { getNomeSalvo } from '../hooks/useNome'
 import { primeiroNome } from '../utils/saudacao'
-import { LINK_ASSINATURA, DIAS_ACESSO } from '../utils/acesso'
+import { DIAS_ACESSO, faixaDesconto, linkAssinatura } from '../utils/acesso'
+import { calcularGanhos, lerRegistros } from '../utils/petalas'
 import CardEvolucao from './CardEvolucao'
 
 // Conta quantos dias a usuária registrou no diário.
@@ -21,6 +22,8 @@ export default function TelaBloqueio() {
   const geral = progressoGeral()
   const nome = primeiroNome(getNomeSalvo())
   const diasDiario = contarDiasDiario()
+  // Desconto pela faixa de Pétalas ganhas (cupom em utils/acesso.js)
+  const { atual: faixa } = faixaDesconto(calcularGanhos(lerRegistros()).total)
 
   const conquistas = [
     {
@@ -89,13 +92,18 @@ export default function TelaBloqueio() {
           </p>
 
           {/* CTA assinatura */}
+          {faixa && (
+            <p className="mt-5 text-sm font-semibold text-[#6B4EA8]">
+              🌸 Suas Pétalas garantiram {faixa.desconto}% de desconto na assinatura
+            </p>
+          )}
           <a
-            href={LINK_ASSINATURA}
+            href={linkAssinatura(faixa)}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full mt-5 py-4 rounded-2xl font-semibold text-lg bg-gradient-to-r from-[#9B7AD6] to-[#6B4EA8] text-white shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2"
+            className={`w-full ${faixa ? 'mt-3' : 'mt-5'} py-4 rounded-2xl font-semibold text-lg bg-gradient-to-r from-[#9B7AD6] to-[#6B4EA8] text-white shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2`}
           >
-            Continuar minha jornada 💜
+            {faixa ? `Continuar com ${faixa.desconto}% de desconto 💜` : 'Continuar minha jornada 💜'}
           </a>
           <p className="text-[#9B8BBB] text-xs mt-4 leading-relaxed">
             Ao assinar, você mantém acesso a todo o ritual, exercícios e ao seu diário de evolução.

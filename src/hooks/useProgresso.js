@@ -11,7 +11,10 @@ function progressoInicial() {
   diasRitual.forEach(({ tarefas }) =>
     tarefas.forEach(({ id }) => (concluidas[id] = false))
   )
-  return { iniciouEm: Date.now(), concluidas }
+  // marcadasNoDia: { [tarefaId]: dia do ritual em que foi marcada } — usado pelas
+  // Pétalas (só pontua a tarefa marcada no próprio dia). Tarefas marcadas antes
+  // desse campo existir não têm entrada e continuam valendo.
+  return { iniciouEm: Date.now(), concluidas, marcadasNoDia: {} }
 }
 
 function carregar() {
@@ -60,7 +63,10 @@ export function useProgresso() {
 
   const marcarTarefa = useCallback((tarefaId, valor) => {
     setEstado((prev) => {
-      const novo = { ...prev, concluidas: { ...prev.concluidas, [tarefaId]: valor } }
+      const marcadasNoDia = { ...(prev.marcadasNoDia ?? {}) }
+      if (valor) marcadasNoDia[tarefaId] = calcularDiaDesbloqueado(prev.iniciouEm)
+      else delete marcadasNoDia[tarefaId]
+      const novo = { ...prev, concluidas: { ...prev.concluidas, [tarefaId]: valor }, marcadasNoDia }
       persistir(novo)
       return novo
     })

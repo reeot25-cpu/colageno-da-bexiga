@@ -12,6 +12,7 @@ import { diasRitual, semanaDoDia, DIAS_POR_SEMANA } from '../data/ritual'
 import { usePetalas } from '../hooks/usePetalas'
 import SaldoPetalas from '../components/SaldoPetalas'
 import CardEvolucao from '../components/CardEvolucao'
+import CardDesconto from '../components/CardDesconto'
 
 const atalhos = [
   { to: '/chas',       label: 'Chás',       emoji: '🍵', bg: '#E8E0F8', cor: '#6B4EA8' },
@@ -55,7 +56,7 @@ export default function Inicio() {
   const pctRitual = Math.round((geral.diasCompletos / diasRitual.length) * 100)
   const semana = semanaDoDia(diaAtivo)
   const inicioSemana = (semana - 1) * DIAS_POR_SEMANA
-  const { saldo } = usePetalas()
+  const { saldo, ganhos } = usePetalas()
 
   return (
     <div className="flex flex-col gap-5 px-4 pt-6 pb-32 max-w-lg mx-auto">
@@ -222,6 +223,9 @@ export default function Inicio() {
             : `Faltam ${prog.total - prog.feitas} tarefas`}
         </p>
       </div>
+
+      {/* Desconto na assinatura por Pétalas ganhas */}
+      <CardDesconto ganhas={ganhos.total} />
 
       {/* Evolução registrada no Diário */}
       <CardEvolucao />
