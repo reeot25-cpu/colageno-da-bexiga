@@ -17,9 +17,44 @@ export function getInicioAcesso() {
   }
 }
 
+// Modo dona — libera o app sem o limite de 21 dias (para a dona testar).
+const CHAVE_DONA = 'collagenflow_dona'
+
+// A senha vem do arquivo .env.local (VITE_SENHA_DONA), que não vai para o GitHub.
+// Sem senha configurada, o ?dona=... não ativa nada.
+// ⚠️ Atenção: no app publicado a senha fica dentro do JavaScript, então é uma
+// trava simples, não uma proteção forte.
+const SENHA_DONA = import.meta.env.VITE_SENHA_DONA
+
+export function ehDona() {
+  if (import.meta.env.DEV) return true
+  try {
+    return localStorage.getItem(CHAVE_DONA) === '1'
+  } catch {
+    return false
+  }
+}
+
+// Lê ?dona=... na URL ao carregar o app: grava ou apaga o modo dona e
+// remove o parâmetro da barra de endereço.
+export function processarParametroDona() {
+  try {
+    const url = new URL(window.location.href)
+    const valor = url.searchParams.get('dona')
+    if (valor === null) return
+    if (valor === 'sair') localStorage.removeItem(CHAVE_DONA)
+    else if (SENHA_DONA && valor === SENHA_DONA) localStorage.setItem(CHAVE_DONA, '1')
+    url.searchParams.delete('dona')
+    window.history.replaceState(null, '', url.pathname + url.search + url.hash)
+  } catch {
+    // localStorage ou history indisponível — ignora
+  }
+}
+
 export function useAcesso() {
   // A data de início é fixa; recalcular o estado a cada render é barato.
   const [inicioMs] = useState(getInicioAcesso)
   const estado = verificarAcesso(inicioMs)
+  if (ehDona()) return { ...estado, expirado: false, dentroDoPrazo: true, LINK_ASSINATURA, DIAS_ACESSO }
   return { ...estado, LINK_ASSINATURA, DIAS_ACESSO }
 }
