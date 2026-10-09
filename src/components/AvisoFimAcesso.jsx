@@ -1,15 +1,11 @@
-import { faixaDesconto, linkAssinatura } from '../utils/acesso'
-import { calcularGanhos, lerRegistros } from '../utils/petalas'
-
-// Aviso gentil que aparece nos últimos dias do período (faltam 3, 2, 1 e 0).
-// Nunca punitivo — só um lembrete carinhoso com convite para continuar.
-// O botão já leva o cupom da faixa de Pétalas, se houver.
+// Aviso gentil que aparece nos últimos dias do programa (faltam 3, 2, 1 e 0).
+// Nunca punitivo e SEM menção a assinatura ou desconto — isso só aparece
+// depois do dia 21, na TelaBloqueio.
 export default function AvisoFimAcesso({ faltam }) {
   const texto =
     faltam > 0
-      ? `Faltam ${faltam} dia${faltam > 1 ? 's' : ''} para o fim do seu período de acesso.`
-      : 'Hoje é o seu último dia de acesso.'
-  const { atual: faixa } = faixaDesconto(calcularGanhos(lerRegistros()).total)
+      ? `Faltam ${faltam} dia${faltam > 1 ? 's' : ''} para o fim do seu programa de 21 dias.`
+      : 'Hoje é o último dia do seu programa de 21 dias.'
 
   return (
     <div className="bg-gradient-to-br from-[#9B7AD6] to-[#6B4EA8] rounded-2xl p-4 shadow-md text-white">
@@ -18,16 +14,8 @@ export default function AvisoFimAcesso({ faltam }) {
         <div className="flex-1">
           <p className="font-semibold text-sm leading-snug">{texto}</p>
           <p className="text-white/80 text-sm mt-0.5 leading-snug">
-            Que tal continuar sua jornada? Você está indo tão bem!
+            Aproveite estes últimos dias: cada cuidado ainda vira Pétalas para a sua recompensa 🌸
           </p>
-          <a
-            href={linkAssinatura(faixa)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block mt-3 bg-white text-[#6B4EA8] font-semibold text-sm px-4 py-2 rounded-xl active:scale-95 transition-transform"
-          >
-            {faixa ? `Quero continuar com ${faixa.desconto}% 💜` : 'Quero continuar 💜'}
-          </a>
         </div>
       </div>
     </div>

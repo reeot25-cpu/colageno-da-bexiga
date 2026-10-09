@@ -12,7 +12,8 @@ import { diasRitual, semanaDoDia, DIAS_POR_SEMANA } from '../data/ritual'
 import { usePetalas } from '../hooks/usePetalas'
 import SaldoPetalas from '../components/SaldoPetalas'
 import CardEvolucao from '../components/CardEvolucao'
-import CardDesconto from '../components/CardDesconto'
+import CardRecompensa from '../components/CardRecompensa'
+import CardDonaDesconto from '../components/CardDonaDesconto'
 
 const atalhos = [
   { to: '/chas',       label: 'Chás',       emoji: '🍵', bg: '#E8E0F8', cor: '#6B4EA8' },
@@ -224,8 +225,9 @@ export default function Inicio() {
         </p>
       </div>
 
-      {/* Desconto na assinatura por Pétalas ganhas */}
-      <CardDesconto ganhas={ganhos.total} />
+      {/* Recompensa do dia 21 (sem mencionar assinatura/desconto antes do fim) */}
+      <CardRecompensa ganhas={ganhos.total} />
+      {acesso.dona && <CardDonaDesconto ganhas={ganhos.total} />}
 
       {/* Evolução registrada no Diário */}
       <CardEvolucao />
