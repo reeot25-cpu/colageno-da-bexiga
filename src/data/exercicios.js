@@ -132,12 +132,10 @@ export const treinos = [
     ],
   },
 
-  // ─── 🔒 PREMIUM — Treino Avançado (oculto por enquanto) ───────────────────────
-  // Categoria de exercícios avançados desativada a pedido. Para REATIVAR no futuro,
-  // basta remover o /* abaixo e o */ que o fecha (logo após o objeto). A página de
-  // Exercícios renderiza `treinos` dinamicamente, então ele volta a aparecer sozinho
-  // na lista. É aqui também que futuros treinos Premium podem ser adicionados.
-  /*
+  // ─── 🌸 PRÊMIO — Treino Completo (desbloqueado com Pétalas) ──────────────────
+  // Só aparece na lista de Exercícios depois que a usuária troca Pétalas por ele
+  // (ver PREMIOS.treinoCompleto em utils/petalas.js). Antes disso, a página mostra
+  // um card com quanto falta. O id fica em ID_TREINO_COMPLETO.
   {
     id: 'completo',
     nome: 'Treino Completo',
@@ -235,5 +233,6 @@ export const treinos = [
       },
     ],
   },
-  */
 ]
+
+export const ID_TREINO_COMPLETO = 'completo'

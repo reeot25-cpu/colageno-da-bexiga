@@ -40,3 +40,21 @@ body {
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #B8A0E0; border-radius: 2px; }
+
+/* ── Pétalas: animação curta ao ganhar ─────────────────────────────────────── */
+@keyframes petalas-ganho {
+  0%   { opacity: 0; transform: translateY(6px) scale(0.9); }
+  15%  { opacity: 1; transform: translateY(0) scale(1.05); }
+  70%  { opacity: 1; transform: translateY(-4px) scale(1); }
+  100% { opacity: 0; transform: translateY(-14px) scale(1); }
+}
+@keyframes petalas-pulso {
+  0%, 100% { transform: scale(1); }
+  30%      { transform: scale(1.12); }
+}
+.anim-petalas-ganho { animation: petalas-ganho 1.8s ease-out forwards; }
+.anim-petalas-pulso { animation: petalas-pulso 0.6s ease-out 2; }
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-petalas-ganho, .anim-petalas-pulso { animation: none; }
+}

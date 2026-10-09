@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { ArrowLeft, Play, Pause, SkipForward, Info, Timer, RotateCcw, Lock, Flame, Trophy, Star, Calendar } from 'lucide-react'
+import { ArrowLeft, Play, Pause, SkipForward, Info, Timer, RotateCcw, Flame, Trophy, Star, Calendar } from 'lucide-react'
 import GuiaVisualExercicio, { gerarInstrucaoDinamica } from '../components/GuiaVisualExercicio'
-import { treinos, avisoExercicios, comoContrair } from '../data/exercicios'
+import { treinos, avisoExercicios, comoContrair, ID_TREINO_COMPLETO } from '../data/exercicios'
+import { idTarefa } from '../data/ritual'
+import { usePetalas } from '../hooks/usePetalas'
+import CardPremio from '../components/CardPremio'
 import {
   gruposInvisiveis,
   mensagemAberturaInvisiveis,
@@ -12,7 +15,6 @@ import { useConfiguracoes } from '../hooks/useConfiguracoes'
 import { useHistoricoExercicios } from '../hooks/useHistoricoExercicios'
 import { getNomeSalvo } from '../hooks/useNome'
 import { primeiroNome } from '../utils/saudacao'
-import { LINK_ASSINATURA } from '../utils/acesso'
 import { tocarTrocaEtapa, tocarConclusao } from '../utils/som'
 
 // ── Seleção de voz feminina ───────────────────────────────────────────────────
@@ -343,35 +345,6 @@ function SecaoInvisiveis() {
   )
 }
 
-// ── Card Premium bloqueado (Treino Avançado) ─────────────────────────────────
-// Sempre bloqueado — leva para a página de assinatura. Quando existir o backend
-// de assinatura, é aqui que o conteúdo avançado será liberado para assinantes.
-function CardPremiumBloqueado() {
-  return (
-    <a
-      href={LINK_ASSINATURA}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="block bg-white rounded-2xl p-5 shadow-sm border border-[#D8CCF0] relative overflow-hidden active:scale-[0.99] transition-transform"
-    >
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">✨</span>
-          <h3 className="font-titulo text-lg text-[#3D2B6B] font-semibold">Treino Avançado</h3>
-        </div>
-        <span className="flex items-center gap-1 bg-[#EDE7F9] text-[#6B4EA8] font-bold text-xs px-3 py-1 rounded-full">
-          <Lock size={12} /> Premium
-        </span>
-      </div>
-      <p className="text-[#7B6B9A] text-sm mb-4">
-        Rotina completa de 10 minutos para levar seu assoalho pélvico ao próximo nível.
-      </p>
-      <div className="w-full py-3.5 bg-[#EDE7F9] text-[#6B4EA8] rounded-xl font-semibold text-base flex items-center justify-center gap-2">
-        <Lock size={16} /> Disponível na assinatura 💜
-      </div>
-    </a>
-  )
-}
 
 function TelaTimer({ treino, onConcluir, onVoltar }) {
   const [etapaIdx, setEtapaIdx] = useState(0)
@@ -585,8 +558,11 @@ export default function Exercicios() {
   const [mostraAviso, setMostraAviso] = useState(true)
   const [secao, setSecao] = useState('treinos') // 'treinos' | 'invisiveis'
   const { marcarTarefa, estado, diaAtivo } = useProgresso()
+  const { saldo, desbloqueado, desbloquear } = usePetalas()
+  const treinoCompletoLiberado = desbloqueado('treinoCompleto')
+  const treinosVisiveis = treinos.filter((t) => t.id !== ID_TREINO_COMPLETO || treinoCompletoLiberado)
 
-  const tarefaId = `d${diaAtivo}_exercicio`
+  const tarefaId = idTarefa(diaAtivo, 'exercicio')
   const feito = estado.concluidas[tarefaId] ?? false
 
   function iniciarTreino(treino) {
@@ -692,7 +668,7 @@ export default function Exercicios() {
           )}
 
           <div className="flex flex-col gap-3">
-            {treinos.map((treino) => (
+            {treinosVisiveis.map((treino) => (
               <div key={treino.id} className="bg-white rounded-2xl p-5 shadow-sm border border-[#D8CCF0]">
                 <div className="flex items-center justify-between mb-3">
                   <div>
@@ -728,8 +704,18 @@ export default function Exercicios() {
               </div>
             ))}
 
-            {/* Treino avançado — sempre bloqueado (Premium) */}
-            <CardPremiumBloqueado />
+            {/* Treino Completo — prêmio de Pétalas: mostra quanto falta até desbloquear */}
+            {!treinoCompletoLiberado && (
+              <CardPremio
+                premio="treinoCompleto"
+                emoji="✨"
+                titulo="Treino Completo"
+                descricao="Rotina completa de 10 minutos para o seu assoalho pélvico. Desbloqueie com as Pétalas que você ganha se cuidando 🌸"
+                saldo={saldo}
+                desbloqueado={false}
+                onDesbloquear={() => desbloquear('treinoCompleto')}
+              />
+            )}
           </div>
         </>
       )}

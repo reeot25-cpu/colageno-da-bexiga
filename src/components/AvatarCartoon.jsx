@@ -1,8 +1,13 @@
 // Avatar cartoon inclusivo com mão contadora de dedos.
 // Para adicionar variações: acrescente objetos ao array VARIACOES.
-// A troca é sequencial a cada nova sessão do app.
+// A troca é sequencial a cada nova sessão do app — a menos que a usuária tenha
+// desbloqueado (com Pétalas) e escolhido uma aparência fixa.
 
-const VARIACOES = [
+import { premioDesbloqueado } from '../utils/petalas'
+
+const CHAVE_ESCOLHIDO = 'collagenflow_avatar_escolhido'
+
+export const VARIACOES = [
   { pele: '#FCDCC8', peleSombra: '#E8BCA8', cabelo: '#4A2B20', estilo: 'lisoLongo', idade: false },
   { pele: '#F0C8A0', peleSombra: '#D4AC84', cabelo: '#C4A882', estilo: 'onduladoMedio', idade: false },
   { pele: '#C68B59', peleSombra: '#A87048', cabelo: '#1A1A1A', estilo: 'cacheado', idade: false },
@@ -103,7 +108,29 @@ function MaoContagem({ dedos, corPele, espelho }) {
   )
 }
 
+// Índice da aparência escolhida, ou null (sem escolha / prêmio não desbloqueado).
+export function lerAvatarEscolhido() {
+  try {
+    const idx = parseInt(localStorage.getItem(CHAVE_ESCOLHIDO) ?? '', 10)
+    if (!Number.isInteger(idx) || idx < 0 || idx >= VARIACOES.length) return null
+    return premioDesbloqueado('avatar') ? idx : null
+  } catch {
+    return null
+  }
+}
+
+// idx = null volta ao sorteio a cada sessão.
+export function salvarAvatarEscolhido(idx) {
+  try {
+    if (idx === null) localStorage.removeItem(CHAVE_ESCOLHIDO)
+    else localStorage.setItem(CHAVE_ESCOLHIDO, String(idx))
+  } catch { /* ignora */ }
+}
+
 export function escolherVariacao() {
+  const escolhido = lerAvatarEscolhido()
+  if (escolhido !== null) return VARIACOES[escolhido]
+
   const CHAVE = 'collagenflow_avatar_seq'
   let idx = 0
   try {
@@ -122,7 +149,7 @@ export function escolherVariacao() {
   return VARIACOES[idx % VARIACOES.length]
 }
 
-export default function AvatarCartoon({ nivel, dedos, variacao }) {
+export default function AvatarCartoon({ nivel, dedos, variacao, largura = 90 }) {
   const v = variacao
   const yBraco = nivel * 18
   const traseiro = CABELO_TRASEIRO[v.estilo] || CABELO_TRASEIRO.lisoLongo
@@ -131,7 +158,7 @@ export default function AvatarCartoon({ nivel, dedos, variacao }) {
   const bochechaOp = v.pele.startsWith('#F') || v.pele.startsWith('#E') ? 0.2 : 0.12
 
   return (
-    <svg viewBox="0 0 100 155" className="shrink-0" style={{ width: 90, height: 140 }}>
+    <svg viewBox="0 0 100 155" className="shrink-0" style={{ width: largura, height: largura * 140 / 90 }}>
       {/* Cabelo traseiro */}
       <path d={traseiro} fill={v.cabelo} />
 

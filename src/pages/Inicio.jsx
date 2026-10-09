@@ -8,7 +8,10 @@ import { useAcesso } from '../hooks/useAcesso'
 import { useHistoricoExercicios } from '../hooks/useHistoricoExercicios'
 import { saudacaoHorario, primeiroNome } from '../utils/saudacao'
 import AvisoFimAcesso from '../components/AvisoFimAcesso'
-import { diasRitual } from '../data/ritual'
+import { diasRitual, semanaDoDia, DIAS_POR_SEMANA } from '../data/ritual'
+import { usePetalas } from '../hooks/usePetalas'
+import SaldoPetalas from '../components/SaldoPetalas'
+import CardEvolucao from '../components/CardEvolucao'
 
 const atalhos = [
   { to: '/chas',       label: 'Chás',       emoji: '🍵', bg: '#E8E0F8', cor: '#6B4EA8' },
@@ -49,7 +52,10 @@ export default function Inicio() {
 
   const tarefasHoje  = diasRitual[diaAtivo - 1]?.tarefas ?? []
   const proximaTarefa = tarefasHoje.find((t) => !estado.concluidas[t.id])
-  const pctRitual = Math.round((geral.diasCompletos / 7) * 100)
+  const pctRitual = Math.round((geral.diasCompletos / diasRitual.length) * 100)
+  const semana = semanaDoDia(diaAtivo)
+  const inicioSemana = (semana - 1) * DIAS_POR_SEMANA
+  const { saldo } = usePetalas()
 
   return (
     <div className="flex flex-col gap-5 px-4 pt-6 pb-32 max-w-lg mx-auto">
@@ -75,6 +81,7 @@ export default function Inicio() {
         <span className="inline-block mt-2 text-xs font-semibold text-[#9B7AD6] bg-[#EDE7F9] border border-[#D8CCF0] rounded-full px-3 py-1">
           Você está no Dia {acesso.diaAtual} de {acesso.total} 💜
         </span>
+        <SaldoPetalas saldo={saldo} />
       </div>
 
       {/* Aviso gentil nos últimos dias (18, 19, 20 e 21) — escondido no modo dona */}
@@ -118,13 +125,13 @@ export default function Inicio() {
         </Link>
       )}
 
-      {/* Card Ritual 7 Dias */}
+      {/* Card Ritual — 3 semanas de 7 dias */}
       <Link to="/progresso" className="block">
         <div className="bg-[#9B7AD6] rounded-2xl p-5 shadow-md text-white">
           <div className="flex items-center justify-between mb-1">
             <div>
               <p className="text-[#D4C0F0] text-sm font-semibold uppercase tracking-wide">Seu Ritual</p>
-              <h2 className="font-titulo text-2xl font-bold">Dia {diaAtivo} de 7</h2>
+              <h2 className="font-titulo text-2xl font-bold">Semana {semana} · Dia {diaAtivo}</h2>
             </div>
             {/* Círculo de percentual */}
             <div className="relative w-14 h-14">
@@ -144,10 +151,10 @@ export default function Inicio() {
             </div>
           </div>
 
-          {/* Barra dos 7 dias */}
+          {/* Barra dos 7 dias da semana atual */}
           <div className="flex gap-1 mb-2 mt-3">
-            {Array.from({ length: 7 }, (_, i) => {
-              const d = i + 1
+            {Array.from({ length: DIAS_POR_SEMANA }, (_, i) => {
+              const d = inicioSemana + i + 1
               const p = progressoDia(d)
               const completo = p.feitas === p.total && p.total > 0
               const atual    = d === diaAtivo
@@ -165,7 +172,7 @@ export default function Inicio() {
           </div>
 
           <p className="text-[#D4C0F0] text-sm mt-1">
-            {geral.diasCompletos} de 7 dias completos · {geral.feitas}/{geral.total} tarefas →
+            {geral.diasCompletos} de {diasRitual.length} dias completos · {geral.feitas}/{geral.total} tarefas →
           </p>
         </div>
       </Link>
@@ -215,6 +222,9 @@ export default function Inicio() {
             : `Faltam ${prog.total - prog.feitas} tarefas`}
         </p>
       </div>
+
+      {/* Evolução registrada no Diário */}
+      <CardEvolucao />
 
       {/* Atalhos */}
       <div className="grid grid-cols-3 gap-3">

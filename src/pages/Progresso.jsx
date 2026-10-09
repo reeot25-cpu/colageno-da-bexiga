@@ -1,10 +1,15 @@
 import { useState, useEffect } from 'react'
-import { CheckCircle2, Circle, Lock, Star, RotateCcw, Flag } from 'lucide-react'
-import { diasRitual } from '../data/ritual'
+import { Link, useLocation } from 'react-router-dom'
+import { CheckCircle2, Circle, Lock, Star, RotateCcw, Flag, Award, Gift } from 'lucide-react'
+import { diasRitual, semanaDoDia, SEMANAS_RITUAL } from '../data/ritual'
 import { useProgresso, diasFaltando } from '../hooks/useProgresso'
+import { usePetalas } from '../hooks/usePetalas'
 import { getNomeSalvo } from '../hooks/useNome'
 import { primeiroNome, comNome } from '../utils/saudacao'
+import { VALORES } from '../utils/petalas'
 import ModeTeste from '../components/ModeTeste'
+import CardPremio from '../components/CardPremio'
+import AvatarCartoon, { VARIACOES, lerAvatarEscolhido, salvarAvatarEscolhido } from '../components/AvatarCartoon'
 
 // ── Modal de resumo do dia ────────────────────────────────────────────────────
 
@@ -118,6 +123,136 @@ function CardDia({ dia, prog, ativo, bloqueado, faltam, onClick }) {
   )
 }
 
+// ── Medalhas ──────────────────────────────────────────────────────────────────
+
+function SecaoMedalhas({ medalhas }) {
+  const ganhas = medalhas.filter((m) => m.ganhou).length
+  return (
+    <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#D8CCF0]">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Award size={18} className="text-[#9B7AD6]" />
+          <p className="font-semibold text-[#3D2B6B] text-base">Suas medalhas</p>
+        </div>
+        <span className="text-xs font-bold text-[#9B7AD6]">{ganhas}/{medalhas.length}</span>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        {medalhas.map((m) => (
+          <div key={m.id} className="flex flex-col items-center text-center gap-1">
+            <div className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl ${
+              m.ganhou
+                ? 'bg-gradient-to-br from-[#C9B3ED] to-[#9B7AD6] shadow-md'
+                : 'bg-[#F5F2FB] border border-dashed border-[#C9B3ED] grayscale opacity-50'
+            }`}>
+              {m.emoji}
+            </div>
+            <p className={`text-[11px] leading-tight ${m.ganhou ? 'text-[#3D2B6B] font-semibold' : 'text-[#9B8BBB]'}`}>
+              {m.nome}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Prêmios (Pétalas) ─────────────────────────────────────────────────────────
+
+const COMO_GANHAR = [
+  ['Tarefa do ritual concluída', VALORES.tarefaRitual],
+  ['Dia do ritual completo (bônus)', VALORES.diaRitualCompleto],
+  [`Treino concluído (até ${VALORES.treinosMaxPorDia} por dia)`, VALORES.treino],
+  ['Diário preenchido no dia', VALORES.diarioPreenchido],
+  ['A cada 7 dias seguidos de treino (bônus)', VALORES.bonusSemanaTreino],
+]
+
+function EscolhaAvatar() {
+  const [escolhido, setEscolhido] = useState(lerAvatarEscolhido)
+  function escolher(idx) {
+    salvarAvatarEscolhido(idx)
+    setEscolhido(idx)
+  }
+  return (
+    <div>
+      <div className="grid grid-cols-4 gap-2">
+        {VARIACOES.map((v, i) => (
+          <button
+            key={i}
+            onClick={() => escolher(i)}
+            aria-label={`Aparência ${i + 1}`}
+            aria-pressed={escolhido === i}
+            className={`flex items-center justify-center rounded-xl py-1 transition-all ${
+              escolhido === i ? 'bg-[#EDE7F9] ring-2 ring-[#9B7AD6]' : 'bg-[#F5F2FB]'
+            }`}
+          >
+            <AvatarCartoon nivel={0} dedos={5} variacao={v} largura={52} />
+          </button>
+        ))}
+      </div>
+      <button
+        onClick={() => escolher(null)}
+        className={`w-full mt-3 py-2.5 rounded-xl text-sm font-semibold border ${
+          escolhido === null ? 'bg-[#EDE7F9] border-[#9B7AD6] text-[#6B4EA8]' : 'border-[#D8CCF0] text-[#7B6B9A]'
+        }`}
+      >
+        🔀 Variar a cada sessão
+      </button>
+    </div>
+  )
+}
+
+function SecaoPremios() {
+  const { saldo, desbloqueado, desbloquear } = usePetalas()
+  return (
+    <div id="premios" className="flex flex-col gap-3 scroll-mt-4">
+      <div className="bg-gradient-to-br from-[#9B7AD6] to-[#6B4EA8] rounded-2xl p-5 text-white shadow-md">
+        <div className="flex items-center gap-2 mb-1">
+          <Gift size={18} className="text-[#D4C0F0]" />
+          <p className="text-[#D4C0F0] text-sm font-semibold uppercase tracking-wide">Seus prêmios</p>
+        </div>
+        <p className="font-titulo text-3xl font-bold">🌸 {saldo.toLocaleString('pt-BR')} <span className="text-lg font-normal text-[#D4C0F0]">Pétalas</span></p>
+        <details className="mt-3 text-sm">
+          <summary className="cursor-pointer text-[#D4C0F0] font-semibold">Como ganhar Pétalas</summary>
+          <ul className="mt-2 flex flex-col gap-1">
+            {COMO_GANHAR.map(([texto, valor]) => (
+              <li key={texto} className="flex justify-between gap-3">
+                <span>{texto}</span>
+                <span className="font-bold shrink-0">+{valor}</span>
+              </li>
+            ))}
+          </ul>
+        </details>
+      </div>
+
+      <CardPremio
+        premio="treinoCompleto"
+        emoji="✨"
+        titulo="Treino Completo"
+        descricao="Rotina completa de 10 minutos para o seu assoalho pélvico."
+        saldo={saldo}
+        desbloqueado={desbloqueado('treinoCompleto')}
+        onDesbloquear={() => desbloquear('treinoCompleto')}
+      >
+        <Link to="/exercicios" className="block w-full py-3 bg-[#EDE7F9] text-[#6B4EA8] rounded-xl font-semibold text-center">
+          Já está na sua lista de exercícios →
+        </Link>
+      </CardPremio>
+
+      <CardPremio
+        premio="avatar"
+        emoji="🎨"
+        titulo="Seu avatar"
+        descricao="Escolha a aparência da guia que acompanha seus treinos."
+        saldo={saldo}
+        desbloqueado={desbloqueado('avatar')}
+        onDesbloquear={() => desbloquear('avatar')}
+      >
+        <EscolhaAvatar />
+      </CardPremio>
+    </div>
+  )
+}
+
 // ── Página principal ──────────────────────────────────────────────────────────
 
 export default function Progresso() {
@@ -136,6 +271,15 @@ export default function Progresso() {
   })
 
   const geral = progressoGeral()
+  const { medalhas } = usePetalas()
+  const location = useLocation()
+
+  // Link "/progresso#premios" (selo de Pétalas da Início) rola até os prêmios
+  useEffect(() => {
+    if (location.hash === '#premios') {
+      document.getElementById('premios')?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [location.hash])
 
   // FIX BUG 2: sincroniza diaExpandido quando diaDesbloqueado muda
   // (ex: modo de teste avança o dia — garante que nunca fique apontando para dia futuro)
@@ -192,7 +336,7 @@ export default function Progresso() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="font-titulo text-2xl text-[#3D2B6B]">Meu Progresso</h1>
-          <p className="text-[#7B6B9A] text-base mt-1">Ritual de 7 dias</p>
+          <p className="text-[#7B6B9A] text-base mt-1">Ritual de {diasRitual.length} dias · {SEMANAS_RITUAL} semanas</p>
         </div>
         <button
           onClick={() => setConfirmaReinicio(true)}
@@ -236,28 +380,33 @@ export default function Progresso() {
         </div>
       </div>
 
-      {/* Grade dos 7 dias */}
-      <div>
-        <p className="text-xs text-[#9B8BBB] mb-2 text-center">Toque em um dia desbloqueado para ver as tarefas</p>
-        <div className="grid grid-cols-7 gap-1.5">
-          {diasRitual.map(({ dia }) => {
-            const bloqueado = dia > diaDesbloqueado
-            return (
-              <CardDia
-                key={dia}
-                dia={dia}
-                prog={progressoDia(dia)}
-                ativo={dia === diaExpandido && !bloqueado}
-                bloqueado={bloqueado}
-                faltam={diasFaltando(dia, iniciouEm)}
-                onClick={() => expandirDia(dia)}
-              />
-            )
-          })}
-        </div>
+      {/* Grade: 3 semanas de 7 dias */}
+      <div className="flex flex-col gap-3">
+        <p className="text-xs text-[#9B8BBB] text-center">Toque em um dia desbloqueado para ver as tarefas</p>
+        {Array.from({ length: SEMANAS_RITUAL }, (_, s) => (
+          <div key={s}>
+            <p className="text-xs font-semibold text-[#6B4EA8] mb-1.5">Semana {s + 1}</p>
+            <div className="grid grid-cols-7 gap-1.5">
+              {diasRitual.filter((d) => d.semana === s + 1).map(({ dia }) => {
+                const bloqueado = dia > diaDesbloqueado
+                return (
+                  <CardDia
+                    key={dia}
+                    dia={dia}
+                    prog={progressoDia(dia)}
+                    ativo={dia === diaExpandido && !bloqueado}
+                    bloqueado={bloqueado}
+                    faltam={diasFaltando(dia, iniciouEm)}
+                    onClick={() => expandirDia(dia)}
+                  />
+                )
+              })}
+            </div>
+          </div>
+        ))}
       </div>
 
-      {diaDesbloqueado < 7 && (
+      {diaDesbloqueado < diasRitual.length && (
         <div className="flex items-center gap-2 justify-center">
           <Lock size={12} className="text-[#C9B3ED]" />
           <p className="text-xs text-[#9B8BBB]">Dias bloqueados desbloqueiam automaticamente a cada dia</p>
@@ -288,7 +437,7 @@ export default function Progresso() {
           <div key={dia} className="bg-white rounded-2xl shadow-sm border border-[#D8CCF0] overflow-hidden">
             <div className="bg-[#9B7AD6] px-5 py-4">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-titulo text-white text-lg font-semibold">Dia {dia}</h3>
+                <h3 className="font-titulo text-white text-lg font-semibold">Semana {semanaDoDia(dia)} · Dia {dia}</h3>
                 <span className="text-[#D4C0F0] text-sm font-semibold">
                   {progExpandido.feitas}/{progExpandido.total} tarefas
                 </span>
@@ -371,6 +520,10 @@ export default function Progresso() {
           </button>
         )}
       </div>
+
+      {/* Medalhas e prêmios */}
+      <SecaoMedalhas medalhas={medalhas} />
+      <SecaoPremios />
 
       {/* Modal confirma reinício */}
       {confirmaReinicio && (

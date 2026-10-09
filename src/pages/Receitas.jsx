@@ -3,11 +3,13 @@ import { ArrowLeft, CheckCircle2, XCircle } from 'lucide-react'
 import { receitas, oQueEvitar } from '../data/receitas'
 import VideoPlayer from '../components/VideoPlayer'
 import { useProgresso } from '../hooks/useProgresso'
+import { idTarefa } from '../data/ritual'
 
-const tarefaIdMap = {
-  'caldo-pro-colageno': 'd1_caldo',
-  'vitamina-firmeza':   'd1_vitamina',
-  'prato-base':         'd1_prato_base',
+// Receita → tarefa do ritual que ela marca (no dia atual)
+const tarefaChaveMap = {
+  'caldo-pro-colageno': 'caldo',
+  'vitamina-firmeza':   'vitamina',
+  'prato-base':         'prato_base',
   'gelatina-noite':     null,
 }
 
@@ -33,8 +35,9 @@ function CardReceita({ receita, onClick }) {
 }
 
 function DetalheReceita({ receita, onVoltar }) {
-  const { estado, marcarTarefa } = useProgresso()
-  const tarefaId = tarefaIdMap[receita.id]
+  const { estado, marcarTarefa, diaAtivo } = useProgresso()
+  const chave = tarefaChaveMap[receita.id]
+  const tarefaId = chave ? idTarefa(diaAtivo, chave) : null
   const feito = tarefaId ? (estado.concluidas[tarefaId] ?? false) : false
 
   return (

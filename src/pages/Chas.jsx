@@ -3,6 +3,7 @@ import { ArrowLeft, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { chas } from '../data/chas'
 import VideoPlayer from '../components/VideoPlayer'
 import { useProgresso } from '../hooks/useProgresso'
+import { idTarefa } from '../data/ritual'
 
 function CardCha({ cha, onClick }) {
   return (
@@ -29,8 +30,8 @@ function CardCha({ cha, onClick }) {
 }
 
 function DetalheCha({ cha, onVoltar }) {
-  const { estado, marcarTarefa } = useProgresso()
-  const tarefaId = `d1_cha_${cha.id === 'firmeza' ? 'firmeza' : cha.id === 'calmaria' ? 'calmaria' : 'anti'}`
+  const { estado, marcarTarefa, diaAtivo } = useProgresso()
+  const tarefaId = idTarefa(diaAtivo, `cha_${cha.id === 'firmeza' ? 'firmeza' : cha.id === 'calmaria' ? 'calmaria' : 'anti'}`)
   const feito = estado.concluidas[tarefaId] ?? false
 
   return (

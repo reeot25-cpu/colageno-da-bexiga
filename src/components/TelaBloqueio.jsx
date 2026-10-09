@@ -3,6 +3,7 @@ import { useProgresso } from '../hooks/useProgresso'
 import { getNomeSalvo } from '../hooks/useNome'
 import { primeiroNome } from '../utils/saudacao'
 import { LINK_ASSINATURA, DIAS_ACESSO } from '../utils/acesso'
+import CardEvolucao from './CardEvolucao'
 
 // Conta quantos dias a usuária registrou no diário.
 function contarDiasDiario() {
@@ -74,6 +75,11 @@ export default function TelaBloqueio() {
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Evolução registrada no Diário (só aparece com 6+ dias de registro) */}
+          <div className="w-full mt-4">
+            <CardEvolucao convite={false} />
           </div>
 
           {/* Convite para continuar */}

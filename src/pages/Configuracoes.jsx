@@ -193,7 +193,7 @@ export default function Configuracoes() {
             <Info size={18} className="text-[#9B7AD6]" /> Sobre o CollagenFlow
           </p>
           <p className="text-[#7B6B9A] text-sm leading-relaxed">
-            Versão 1.1 · Ritual de bem-estar de 7 dias para a saúde da bexiga e do assoalho pélvico.
+            Versão 1.1 · Ritual de bem-estar de 21 dias (3 semanas) para a saúde da bexiga e do assoalho pélvico.
           </p>
         </div>
         <div className="py-4">
