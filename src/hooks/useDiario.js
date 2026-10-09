@@ -2,8 +2,15 @@ import { useState, useCallback } from 'react'
 
 const CHAVE = 'collagenflow_diario'
 
-function chaveData(data) {
-  return data.toISOString().slice(0, 10) // "YYYY-MM-DD"
+// Data LOCAL no formato "YYYY-MM-DD" (mesmo formato de antes).
+// Antes usava toISOString(), que é UTC: no Brasil, um registro feito depois das
+// 21h caía no dia seguinte. Os registros antigos são mantidos como estão — sem o
+// horário original não dá para saber quais foram deslocados, então não mexemos neles.
+export function chaveData(data) {
+  const ano = data.getFullYear()
+  const mes = String(data.getMonth() + 1).padStart(2, '0')
+  const dia = String(data.getDate()).padStart(2, '0')
+  return `${ano}-${mes}-${dia}`
 }
 
 function entradaVazia() {
