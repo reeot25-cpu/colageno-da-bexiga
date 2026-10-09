@@ -234,7 +234,7 @@ export function gerarInstrucaoDinamica(nomeEtapa) {
 
 // ── Componente principal ─────────────────────────────────────────────────────
 
-export default function GuiaVisualExercicio({ nomeEtapa, segundosRestantes, duracaoTotal, ativo, audioAtivo, onToggleAudio }) {
+export default function GuiaVisualExercicio({ nomeEtapa, segundosRestantes, duracaoTotal, ativo, audioAtivo, onToggleAudio, onEstadoEsperado }) {
   const svgId = useMemo(() => `gve${Math.random().toString(36).slice(2, 8)}`, [])
   const tipo = useMemo(() => detectarPadrao(nomeEtapa), [nomeEtapa])
   const ciclo = PADROES[tipo]
@@ -266,6 +266,12 @@ export default function GuiaVisualExercicio({ nomeEtapa, segundosRestantes, dura
   const dedos = ehFaseAtiva
     ? Math.min(Math.floor(tempoNaFase % 5) + 1, 5)
     : 5 // respiração: mão aberta
+
+  // Avisa a tela do treino quando o guia troca entre Aperta e Solta
+  // (usado pelo botão de segurar — ver utils/validacaoTreino.js)
+  useEffect(() => {
+    onEstadoEsperado?.(ehAperta)
+  }, [ehAperta, onEstadoEsperado])
 
   // Áudio guia
   useAudioGuia(fase, tempoNaFase, ativo, audioAtivo)

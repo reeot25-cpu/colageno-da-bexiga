@@ -1,10 +1,12 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { ArrowLeft, Play, Pause, SkipForward, Info, Timer, RotateCcw, Flame, Trophy, Star, Calendar } from 'lucide-react'
 import GuiaVisualExercicio, { gerarInstrucaoDinamica } from '../components/GuiaVisualExercicio'
 import { treinos, avisoExercicios, comoContrair, ID_TREINO_COMPLETO } from '../data/exercicios'
 import { idTarefa } from '../data/ritual'
 import { usePetalas } from '../hooks/usePetalas'
 import CardPremio from '../components/CardPremio'
+import { avaliarTreino, calcularAcerto, treinoConta, CARENCIA_TROCA_MS, ACERTO_MINIMO, MOTIVOS } from '../utils/validacaoTreino'
+import { VALORES } from '../utils/petalas'
 import {
   gruposInvisiveis,
   mensagemAberturaInvisiveis,
@@ -141,14 +143,46 @@ const FRASES_CONCLUSAO = [
   'Você está investindo na sua saúde de um jeito que poucas fazem.',
 ]
 
-function TelaConclusao({ treino, onConcluir, onVoltar }) {
+// Resultado das travas contra trapaça, mostrado de forma acolhedora.
+function ResultadoPetalas({ validacao, validosHoje }) {
+  const pct = Math.round((validacao.acerto ?? 0) * 100)
+  if (!validacao.valido) {
+    return (
+      <div className="w-full bg-white border border-[#D8CCF0] rounded-2xl p-4 text-center">
+        <p className="text-[#3D2B6B] text-sm leading-relaxed">
+          Este treino não rendeu Pétalas porque {MOTIVOS[validacao.motivo]}
+          {validacao.motivo === 'botao' && ` (acerto ${pct}%, mínimo ${Math.round(ACERTO_MINIMO * 100)}%)`}.
+        </p>
+        <p className="text-[#7B6B9A] text-xs mt-1">Ele fica no seu histórico mesmo assim 💜</p>
+      </div>
+    )
+  }
+  if (validosHoje >= VALORES.treinosMaxPorDia) {
+    return (
+      <div className="w-full bg-[#EDE7F9] rounded-2xl p-4 text-center">
+        <p className="text-[#6B4EA8] text-sm font-semibold">
+          Você já ganhou as Pétalas de treino de hoje (máx. {VALORES.treinosMaxPorDia} por dia) · acerto {pct}%
+        </p>
+      </div>
+    )
+  }
+  return (
+    <div className="w-full bg-[#EDE7F9] rounded-2xl p-4 text-center">
+      <p className="text-[#6B4EA8] font-bold">✅ +{VALORES.treino} Pétalas 🌸 · acerto {pct}%</p>
+    </div>
+  )
+}
+
+function TelaConclusao({ treino, validacao, onConcluir, onVoltar }) {
   const nome = primeiroNome(getNomeSalvo())
-  const { registrarTreino, stats } = useHistoricoExercicios()
+  const { registrarTreino, stats, treinoHoje } = useHistoricoExercicios()
   const [registrado, setRegistrado] = useState(false)
   const [frase] = useState(() => FRASES_CONCLUSAO[Math.floor(Math.random() * FRASES_CONCLUSAO.length)])
+  // Contado antes de registrar este treino (fixo ao montar a tela)
+  const [validosHoje] = useState(() => treinoHoje.filter(treinoConta).length)
 
   function registrar() {
-    registrarTreino(treino)
+    registrarTreino(treino, validacao)
     setRegistrado(true)
     onConcluir()
   }
@@ -216,6 +250,8 @@ function TelaConclusao({ treino, onConcluir, onVoltar }) {
           <span className="text-3xl">🔥</span>
         </div>
       )}
+
+      {validacao && <ResultadoPetalas validacao={validacao} validosHoje={validosHoje} />}
 
       {/* Frase motivacional */}
       <div className="w-full bg-[#EDE7F9] rounded-2xl p-4 text-center">
@@ -360,6 +396,88 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
   const etapa = treino.etapas[etapaIdx]
   const totalEtapas = treino.etapas.length
   const instrucaoDinamica = gerarInstrucaoDinamica(etapa.nome)
+  const rodando = iniciado && !pausado && !concluido
+
+  // ── Travas contra trapaça (ver utils/validacaoTreino.js) ──
+  const [pressionado, setPressionado] = useState(false)
+  const pressionadoRef = useRef(false)
+  const esperadoRef = useRef({ aperta: false, desde: 0 }) // estado atual do guia
+  const amostrasRef = useRef({ aperta: { total: 0, acertos: 0 }, solta: { total: 0, acertos: 0 } })
+  const tempoAtivoRef = useRef(0) // ms com o treino rodando e o app em primeiro plano
+  const pulouRef = useRef(false)
+  const [acerto, setAcerto] = useState(null)
+  const [pausaAuto, setPausaAuto] = useState(false)
+  const [confirmaPular, setConfirmaPular] = useState(false)
+  const duracaoMs = treino.etapas.reduce((s, e) => s + e.segundos, 0) * 1000
+
+  function segurar(valor) {
+    pressionadoRef.current = valor
+    setPressionado(valor)
+  }
+
+  const aoMudarEsperado = useCallback((aperta) => {
+    esperadoRef.current = { aperta, desde: performance.now() }
+  }, [])
+
+  // Amostra a cada 0,1 s: botão pressionado bate com o Aperta/Solta do guia?
+  // Também soma o tempo real com o app aberto.
+  useEffect(() => {
+    if (!rodando) return
+    let ultimo = performance.now()
+    esperadoRef.current.desde = ultimo // carência ao começar/retomar
+    const amostrar = setInterval(() => {
+      const agora = performance.now()
+      const delta = agora - ultimo
+      ultimo = agora
+      if (document.visibilityState !== 'visible') return
+      tempoAtivoRef.current += Math.min(delta, 250) // ignora saltos de aba congelada
+      const esp = esperadoRef.current
+      if (agora - esp.desde < CARENCIA_TROCA_MS) return
+      const a = esp.aperta ? amostrasRef.current.aperta : amostrasRef.current.solta
+      a.total++
+      if (pressionadoRef.current === esp.aperta) a.acertos++
+    }, 100)
+    const exibir = setInterval(() => {
+      const { aperta, solta } = amostrasRef.current
+      if (aperta.total + solta.total) setAcerto(calcularAcerto(amostrasRef.current))
+    }, 1000)
+    return () => { clearInterval(amostrar); clearInterval(exibir) }
+  }, [rodando])
+
+  // Saiu do app no meio do treino → pausa sozinho (não perde o treino)
+  useEffect(() => {
+    function aoMudarVisibilidade() {
+      if (document.visibilityState === 'hidden' && rodando) {
+        setPausado(true)
+        setPausaAuto(true)
+        segurar(false)
+        window.speechSynthesis?.cancel()
+      }
+    }
+    document.addEventListener('visibilitychange', aoMudarVisibilidade)
+    return () => document.removeEventListener('visibilitychange', aoMudarVisibilidade)
+  }, [rodando])
+
+  // Barra de espaço também segura o botão (computador)
+  useEffect(() => {
+    if (!rodando) return
+    const descer = (e) => { if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) segurar(true) } }
+    const subir = (e) => { if (e.code === 'Space') { e.preventDefault(); segurar(false) } }
+    window.addEventListener('keydown', descer)
+    window.addEventListener('keyup', subir)
+    return () => {
+      window.removeEventListener('keydown', descer)
+      window.removeEventListener('keyup', subir)
+    }
+  }, [rodando])
+
+  // Resultado calculado uma vez, quando o treino termina
+  const validacao = useMemo(() => (concluido ? avaliarTreino({
+    pulou: pulouRef.current,
+    tempoAtivoMs: tempoAtivoRef.current,
+    duracaoMs,
+    amostras: amostrasRef.current,
+  }) : null), [concluido, duracaoMs])
 
   // Auto-play instrução ao entrar numa nova etapa (se áudio ligado e já iniciado)
   useEffect(() => {
@@ -409,6 +527,13 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
   }, [etapaIdx, iniciado, pausado, concluido, config.somAtivo])
 
   function pularEtapa() {
+    // 1º toque só avisa: pular faz o treino não valer Pétalas
+    if (!pulouRef.current && !confirmaPular) {
+      setConfirmaPular(true)
+      return
+    }
+    pulouRef.current = true
+    setConfirmaPular(false)
     clearInterval(intervalRef.current)
     window.speechSynthesis?.cancel()
     const proximo = etapaIdx + 1
@@ -428,6 +553,7 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
     return (
       <TelaConclusao
         treino={treino}
+        validacao={validacao}
         onConcluir={onConcluir}
         onVoltar={onVoltar}
       />
@@ -508,7 +634,42 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
           ativo={iniciado && !pausado && !concluido}
           audioAtivo={audioAtivo}
           onToggleAudio={() => setAudioAtivo((a) => !a)}
+          onEstadoEsperado={aoMudarEsperado}
         />
+
+        {/* Botão de segurar: acompanha o Aperta/Solta do guia (vale Pétalas) */}
+        {iniciado && (
+          <div className="w-full flex flex-col items-center gap-2">
+            <button
+              type="button"
+              disabled={!rodando}
+              aria-pressed={pressionado}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* sem captura, segue */ }
+                segurar(true)
+              }}
+              onPointerUp={() => segurar(false)}
+              onPointerCancel={() => segurar(false)}
+              onLostPointerCapture={() => segurar(false)}
+              onContextMenu={(e) => e.preventDefault()}
+              style={{ touchAction: 'none', WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
+              className={`w-full py-6 rounded-3xl font-semibold text-lg transition-all disabled:opacity-50 ${
+                pressionado
+                  ? 'bg-[#6B4EA8] text-white scale-[0.98] shadow-inner'
+                  : 'bg-white text-[#6B4EA8] border-2 border-[#9B7AD6] shadow-md'
+              }`}
+            >
+              {pressionado ? '↑ Segurando — Aperta' : 'Segure aqui no ↑ Aperta'}
+            </button>
+            <p className="text-xs text-[#7B6B9A] text-center leading-snug">
+              Segure no <strong>↑ Aperta</strong> e solte no <strong>↓ Solta</strong>, acompanhando o guia.
+              {acerto !== null && (
+                <span className="ml-1 font-semibold text-[#6B4EA8]">Acerto: {Math.round(acerto * 100)}%</span>
+              )}
+            </p>
+          </div>
+        )}
 
         {/* Instrução da etapa + botão de narração */}
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#D8CCF0] w-full text-center">
@@ -529,10 +690,20 @@ function TelaTimer({ treino, onConcluir, onVoltar }) {
         )}
 
         {/* Controles durante o exercício */}
+        {pausaAuto && pausado && (
+          <div className="w-full bg-[#EDE7F9] rounded-2xl p-3 text-center text-sm text-[#6B4EA8] font-semibold">
+            Treino pausado porque você saiu do app. Toque em Continuar 💜
+          </div>
+        )}
+        {confirmaPular && (
+          <div className="w-full bg-[#FFF8E7] border border-[#F5C842] rounded-2xl p-3 text-center text-sm text-[#7A5A20]">
+            Pulando etapas, este treino não vale Pétalas. Toque em <strong>Pular</strong> de novo para confirmar.
+          </div>
+        )}
         {iniciado && (
           <div className="flex gap-3 items-center">
             <button
-              onClick={() => setPausado((p) => !p)}
+              onClick={() => { setPausado((p) => !p); setPausaAuto(false) }}
               className="flex items-center gap-2 px-6 py-3 bg-[#9B7AD6] text-white rounded-2xl font-semibold"
             >
               {pausado ? <Play size={20} /> : <Pause size={20} />}

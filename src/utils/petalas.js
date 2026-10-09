@@ -11,6 +11,7 @@
 
 import { diasRitual } from '../data/ritual'
 import { ehDona } from '../hooks/useAcesso'
+import { treinoConta } from './validacaoTreino'
 
 export const VALORES = {
   tarefaRitual: 5,
@@ -76,8 +77,9 @@ export function calcularGanhos({ concluidas, treinos, diario }) {
   const tarefas = diasRitual.flatMap((d) => d.tarefas).filter((t) => concluidas[t.id]).length
   const diasCompletos = diasRitual.filter((d) => d.tarefas.every((t) => concluidas[t.id])).length
 
+  // Só treinos válidos (ver utils/validacaoTreino.js) pontuam e contam para o bônus
   const treinosPorDia = {}
-  treinos.forEach((t) => { treinosPorDia[t.data] = (treinosPorDia[t.data] ?? 0) + 1 })
+  treinos.filter(treinoConta).forEach((t) => { treinosPorDia[t.data] = (treinosPorDia[t.data] ?? 0) + 1 })
   const treinosQueContam = Object.values(treinosPorDia)
     .reduce((soma, n) => soma + Math.min(n, VALORES.treinosMaxPorDia), 0)
 
@@ -132,7 +134,8 @@ export function desbloquearPremio(premio) {
 
 // ── Medalhas ─────────────────────────────────────────────────────────────────
 
-export function calcularMedalhas({ treinos, diario }) {
+export function calcularMedalhas({ treinos: todosTreinos, diario }) {
+  const treinos = todosTreinos.filter(treinoConta)
   const maiorSeqTreino = maior(sequencias(treinos.map((t) => t.data)))
   const maiorSeqDiario = maior(sequencias(Object.keys(diario)))
   return [

@@ -17,7 +17,8 @@ function dataLocal(d = new Date()) {
 export function useHistoricoExercicios() {
   const [registros, setRegistros] = useState(lerHistorico)
 
-  const registrarTreino = useCallback((treino) => {
+  // validacao = { valido, motivo?, acerto } (ver utils/validacaoTreino.js)
+  const registrarTreino = useCallback((treino, validacao) => {
     const novo = {
       id: Date.now(),
       data: dataLocal(),
@@ -26,6 +27,7 @@ export function useHistoricoExercicios() {
       treinoNome: treino.nome,
       duracao: treino.duracao,
       etapas: treino.etapas.length,
+      ...validacao,
     }
     setRegistros((prev) => {
       const atualizado = [...prev, novo]

@@ -161,7 +161,7 @@ function SecaoMedalhas({ medalhas }) {
 const COMO_GANHAR = [
   ['Tarefa do ritual concluída', VALORES.tarefaRitual],
   ['Dia do ritual completo (bônus)', VALORES.diaRitualCompleto],
-  [`Treino concluído (até ${VALORES.treinosMaxPorDia} por dia)`, VALORES.treino],
+  [`Treino até o fim, segurando no Aperta (até ${VALORES.treinosMaxPorDia} por dia)`, VALORES.treino],
   ['Diário preenchido no dia', VALORES.diarioPreenchido],
   ['A cada 7 dias seguidos de treino (bônus)', VALORES.bonusSemanaTreino],
 ]
